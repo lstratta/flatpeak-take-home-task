@@ -10,9 +10,7 @@ import (
 
 func main() {
 	c := config.New()
- 	m := server.NewServeMux()
-	m.Routes()
-	s := server.NewServer(c, m)
+	s := server.NewServer(c)
 	
 	if err := s.Start(); err != http.ErrServerClosed {
 		log.Fatal(err)

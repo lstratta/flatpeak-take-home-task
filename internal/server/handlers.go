@@ -3,6 +3,7 @@ package server
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
@@ -25,5 +26,9 @@ return http.HandlerFunc( func(w http.ResponseWriter, r *http.Request) {
     
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(b)
+		if err != nil {
+			log.Println("failed to write body")
+			w.WriteHeader(http.StatusInternalServerError)
+		}
 	})
 }

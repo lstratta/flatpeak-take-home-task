@@ -11,6 +11,6 @@ func NewServeMux() *serveMux {
 }
 
 
-func (m *serveMux) Routes() {
+func (m *serveMux) AddRoutes() {
 	m.Handle("GET /", m.testHandler())
 }

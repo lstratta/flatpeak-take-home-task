@@ -32,3 +32,14 @@ return http.HandlerFunc( func(w http.ResponseWriter, r *http.Request) {
 		}
 	})
 }
+
+func (s *serveMux) healthHandler() http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		_, err := w.Write([]byte("service alive"))
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+
+	})
+}

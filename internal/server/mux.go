@@ -12,5 +12,6 @@ func NewServeMux() *serveMux {
 
 
 func (m *serveMux) AddRoutes() {
-	m.Handle("GET /", m.testHandler())
+	m.Handle("GET /", Logger(m.testHandler()))
+	m.Handle("GET /health", m.healthHandler())
 }

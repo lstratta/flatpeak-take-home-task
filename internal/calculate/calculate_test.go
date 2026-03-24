@@ -1,7 +1,6 @@
 package calculate
 
 import (
-	"fmt"
 	"testing"
 	"time"
 

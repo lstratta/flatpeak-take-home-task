@@ -11,6 +11,7 @@ import (
 
 func (s *serveMux) slotsHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		intensity := "low"
 		d, err := neso.GetNesoData()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -18,7 +19,7 @@ func (s *serveMux) slotsHandler() http.Handler {
 			return
 		}
 
-		lowSlots, err := calculate.FilterPeriodsByLowIntensity(d.Data)
+		lowSlots, err := calculate.FilterPeriodsByIntensity(d.Data, intensity)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)

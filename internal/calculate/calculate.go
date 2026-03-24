@@ -2,6 +2,7 @@ package calculate
 
 import (
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/lstratta/flatpeak-take-home-task/internal/neso"
@@ -17,14 +18,21 @@ type Carbon struct {
 	Intensity int64 `json:"intensity"`
 }
 
-func FilterPeriodsByLowIntensity(p []neso.Period) ([]neso.Period, error) {
+type index string
+
+const (
+	veryLowIndex    index         = "very low"
+	lowIndex        index         = "low"
+	moderateIndex   index         = "moderate"
+	highIndex       index         = "high"
+	fixedTimePeriod time.Duration = 30
+)
+
+func FilterPeriodsByLowestIntensity(p []neso.Period, duration time.Duration) ([]neso.Period, error) {
 	var lowPeriods []neso.Period
 
 	for i := range p {
 		idx := p[i]
-		if idx.Intensity.Index != "low" {
-			continue
-		}
 
 		lowPeriods = append(lowPeriods, idx)
 	}
@@ -34,7 +42,6 @@ func FilterPeriodsByLowIntensity(p []neso.Period) ([]neso.Period, error) {
 
 func FilterPeriodsByDuration(pArr []neso.Period, duration time.Duration) ([]neso.Period, error) {
 	var selectedPeriods []neso.Period
-	var fixedTimePeriod time.Duration = 30
 
 	startTime, err := formatTime(pArr[0].From)
 	if err != nil {
@@ -63,10 +70,36 @@ func FilterPeriodsByDuration(pArr []neso.Period, duration time.Duration) ([]neso
 	return selectedPeriods, nil
 }
 
-func CalculateContinuousPeriod(pArr []neso.Period) (*neso.Period, error) {
-	p := &neso.Period{}
+func CalculateWeightedAverageForTimePeriod() {
 
-	return p, nil
+}
+
+func CalculateContinuousPeriod(pArr []neso.Period, duration time.Duration) (int64, error) {
+	weight := 0.0
+	totalIntensity := 0.0
+	l := len(pArr)
+
+	timeRemainder := int(duration.Minutes()) % int(fixedTimePeriod)
+	if timeRemainder > 0 {
+		weight = float64(timeRemainder) / float64(fixedTimePeriod)
+		totalIntensity = float64(pArr[l-1].Intensity.Forecast) * weight
+		for i := range l {
+			// skip the last element of the slice
+			if i == l-1 {
+				continue
+			}
+			totalIntensity += float64(pArr[i].Intensity.Forecast)
+		}
+	} else {
+		weight = 1.0
+		for _, p := range pArr {
+			totalIntensity += float64(p.Intensity.Forecast)
+		}
+	}
+
+	averageIntensity := totalIntensity / (float64(l) - 1 + weight)
+
+	return int64(math.Round(averageIntensity)), nil
 }
 
 func formatTime(s string) (time.Time, error) {

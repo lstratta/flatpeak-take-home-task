@@ -18,7 +18,7 @@ func (s *serveMux) slotsHandler() http.Handler {
 			return
 		}
 
-		lowSlots, err := calculate.FilterLowIntensitySlots(d)
+		lowSlots, err := calculate.FilterPeriodsByLowIntensity(d.Data)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)

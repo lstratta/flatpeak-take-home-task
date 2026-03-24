@@ -12,8 +12,8 @@ type Data struct {
 }
 
 type Period struct {
-	From      string    `json:"from"`
-	To        string    `json:"to"`
+	From      time.Time `json:"from"`
+	To        time.Time `json:"to"`
 	Intensity Intensity `json:"intensity"`
 }
 
@@ -22,6 +22,12 @@ type Intensity struct {
 	Actual   int64  `json:"actual"`
 	Index    string `json:"index"`
 }
+
+type ByDateSorter []Period
+
+func (b ByDateSorter) Len() int           { return len(b) }
+func (b ByDateSorter) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
+func (b ByDateSorter) Less(i, j int) bool { return b[i].From.Before(b[j].From) }
 
 const (
 	NESO_API            string = "https://api.carbonintensity.org.uk"

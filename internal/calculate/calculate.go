@@ -3,6 +3,7 @@ package calculate
 import (
 	"fmt"
 	"math"
+	"sort"
 	"time"
 
 	"github.com/lstratta/flatpeak-take-home-task/internal/neso"
@@ -50,26 +51,22 @@ func FilterPeriodsByLowestIntensity(pArr []neso.Period, duration time.Duration) 
 		if k == timeSpan {
 			break
 		}
-
 	}
 
+	fmt.Println("before sort", lowPeriods)
+	sort.Sort(neso.ByDateSorter(lowPeriods))
+	fmt.Println("after sort", lowPeriods)
 	return lowPeriods, nil
 }
 
 func FilterPeriodsByDuration(pArr []neso.Period, duration time.Duration) ([]neso.Period, error) {
 	var selectedPeriods []neso.Period
 
-	startTime, err := formatTime(pArr[0].From)
-	if err != nil {
-		return nil, fmt.Errorf("error formatting time: %v", err)
-	}
+	startTime := pArr[0].From
 
 	for i := range pArr {
 		idx := pArr[i]
-		endTime, err := formatTime(pArr[i].To)
-		if err != nil {
-			return nil, fmt.Errorf("error formatting time: %v", err)
-		}
+		endTime := pArr[i].To
 
 		diff := endTime.Sub(startTime)
 		if diff <= duration {
@@ -86,11 +83,41 @@ func FilterPeriodsByDuration(pArr []neso.Period, duration time.Duration) ([]neso
 	return selectedPeriods, nil
 }
 
-func CalculateWeightedAverageForTimePeriod() {
+func CalculateWeightedAverageForTimePeriod(pArr []neso.Period, duration time.Duration) ([]Slot, error) {
+	s := []Slot{}
 
+	for _, p := range pArr {
+
+		entry := Slot{
+			ValidFrom: p.From,
+			ValidTo:   p.To,
+			Carbon: Carbon{
+				Intensity: p.Intensity.Forecast,
+			},
+		}
+		s = append(s, entry)
+	}
+
+	fixedTimePeriodInt64 := int64(fixedTimePeriod)
+	durationInt64 := int64(duration.Minutes())
+
+	timeRemainder := durationInt64 % fixedTimePeriodInt64
+	if timeRemainder == 0 {
+		return s, nil
+	}
+
+	weight := timeRemainder / fixedTimePeriodInt64
+	l := len(s)
+	if l < 1 {
+		return nil, fmt.Errorf("slice length too short")
+	}
+
+	s[l-1].Carbon.Intensity = s[l-1].Carbon.Intensity * weight
+
+	return s, nil
 }
 
-func CalculateContinuousPeriod(pArr []neso.Period, duration time.Duration) (int64, error) {
+func CalculateContinuousPeriodIntensity(pArr []neso.Period, duration time.Duration) (int64, error) {
 	weight := 0.0
 	totalIntensity := 0.0
 	l := len(pArr)
@@ -116,20 +143,6 @@ func CalculateContinuousPeriod(pArr []neso.Period, duration time.Duration) (int6
 	averageIntensity := totalIntensity / (float64(l) - 1 + weight)
 
 	return int64(math.Round(averageIntensity)), nil
-}
-
-func formatTime(s string) (time.Time, error) {
-	// remove end Z character
-	sCut := s[:len(s)-1]
-	// append :00Z
-	formattedTime := fmt.Sprint(sCut, ":00Z")
-
-	t, err := time.Parse(time.RFC3339, formattedTime)
-	if err != nil {
-		return time.Time{}, fmt.Errorf("from field: error converting string to time: %v", err)
-	}
-
-	return t, nil
 }
 
 // func hold() {

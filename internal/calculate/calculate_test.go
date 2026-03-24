@@ -8,7 +8,7 @@ import (
 	"github.com/lstratta/flatpeak-take-home-task/internal/neso"
 )
 
-func Test_FilterPeriodsByLowInensity_ReturnSlots(t *testing.T) {
+func Test_FilterPeriodsByLowestInensity_ReturnSlots(t *testing.T) {
 	var tests = []struct {
 		target   int
 		duration string
@@ -79,11 +79,49 @@ func Test_FilterPeriodsByDuration_ReturnsSlots(t *testing.T) {
 	}
 }
 
-func Test_CalculateNonContinuousPeriod_ReturnsCorrectAverage(t *testing.T) {
+func Test_CalculateWeightedAverageForLastPeriodInSlice_ReturnsCorrectIntensity(t *testing.T) {
+	var tests = []struct {
+		target   int64
+		duration string
+	}{
+		{13, "30m"},
+		{1, "60m"},
+		{56, "90m"},
+		{70, "45m"},
+		{75, "61m"},
+	}
+
+	d := genData()
+	for _, tab := range tests {
+		dur, err := time.ParseDuration(tab.duration)
+		if err != nil {
+			t.Errorf("error parsing duration: %v", err)
+		}
+
+		pArr, err := FilterPeriodsByLowestIntensity(d.Data, dur)
+		if err != nil {
+			t.Errorf("error FilterPeriodsByLowestIntensity: %v", err)
+		}
+
+		slots, err := CalculateWeightedAverageForTimePeriod(pArr, dur)
+		if err != nil {
+			t.Errorf("error calculating continuous period: %v", err)
+		}
+
+		l := len(slots)
+		if l < 1 {
+			t.Errorf("length too short")
+		}
+		actual := slots[l-1].Carbon.Intensity
+
+		if actual != tab.target {
+			t.Errorf("averaged intensity - expected: %d, actual: %d", tab.target, actual)
+		}
+	}
 
 }
 
-func Test_CalculateContinuousPeriod_ReturnsCorrectAverage(t *testing.T) {
+func Test_CalculateContinuousPeriod_ReturnsCorrectAverageIntensity(t *testing.T) {
 	var tests = []struct {
 		target   int64
 		duration string
@@ -107,11 +145,7 @@ func Test_CalculateContinuousPeriod_ReturnsCorrectAverage(t *testing.T) {
 			t.Errorf("error FilterPeriodsByDuration: %v", err)
 		}
 
-		//if tab.duration == "45m" {
-		//	fmt.Printf("%v\n", n)
-		//}
-
-		actual, err := CalculateContinuousPeriod(n, dur)
+		actual, err := CalculateContinuousPeriodIntensity(n, dur)
 		if err != nil {
 			t.Errorf("error calculating continuous period: %v", err)
 		}
@@ -126,8 +160,8 @@ func genData() *neso.Data {
 	return &neso.Data{
 		Data: []neso.Period{
 			{
-				From: "2026-03-24T10:30Z",
-				To:   "2026-03-24T11:00Z",
+				From: time.Date(2026, time.Month(3), 24, 10, 30, 00, 00, time.Now().UTC().Location()),
+				To:   time.Date(2026, time.Month(3), 24, 11, 00, 00, 00, time.Now().UTC().Location()),
 				Intensity: neso.Intensity{
 					Forecast: 56,
 					Actual:   0,
@@ -135,8 +169,8 @@ func genData() *neso.Data {
 				},
 			},
 			{
-				From: "2026-03-24T11:00Z",
-				To:   "2026-03-24T11:30Z",
+				From: time.Date(2026, time.Month(3), 24, 11, 00, 00, 00, time.Now().UTC().Location()),
+				To:   time.Date(2026, time.Month(3), 24, 11, 30, 00, 00, time.Now().UTC().Location()),
 				Intensity: neso.Intensity{
 					Forecast: 97,
 					Actual:   0,
@@ -144,8 +178,8 @@ func genData() *neso.Data {
 				},
 			},
 			{
-				From: "2026-03-24T11:30Z",
-				To:   "2026-03-24T12:00Z",
+				From: time.Date(2026, time.Month(3), 24, 11, 30, 00, 00, time.Now().UTC().Location()),
+				To:   time.Date(2026, time.Month(3), 24, 12, 00, 00, 00, time.Now().UTC().Location()),
 				Intensity: neso.Intensity{
 					Forecast: 13,
 					Actual:   0,
@@ -153,8 +187,8 @@ func genData() *neso.Data {
 				},
 			},
 			{
-				From: "2026-03-24T12:00Z",
-				To:   "2026-03-24T12:30Z",
+				From: time.Date(2026, time.Month(3), 24, 12, 00, 00, 00, time.Now().UTC().Location()),
+				To:   time.Date(2026, time.Month(3), 24, 12, 30, 00, 00, time.Now().UTC().Location()),
 				Intensity: neso.Intensity{
 					Forecast: 170,
 					Actual:   0,
@@ -162,8 +196,8 @@ func genData() *neso.Data {
 				},
 			},
 			{
-				From: "2026-03-24T12:30Z",
-				To:   "2026-03-24T13:00Z",
+				From: time.Date(2026, time.Month(3), 24, 12, 30, 00, 00, time.Now().UTC().Location()),
+				To:   time.Date(2026, time.Month(3), 24, 13, 00, 00, 00, time.Now().UTC().Location()),
 				Intensity: neso.Intensity{
 					Forecast: 83,
 					Actual:   0,
@@ -171,8 +205,8 @@ func genData() *neso.Data {
 				},
 			},
 			{
-				From: "2026-03-24T13:00Z",
-				To:   "2026-03-24T13:30Z",
+				From: time.Date(2026, time.Month(3), 24, 13, 00, 00, 00, time.Now().UTC().Location()),
+				To:   time.Date(2026, time.Month(3), 24, 13, 30, 00, 00, time.Now().UTC().Location()),
 				Intensity: neso.Intensity{
 					Forecast: 130,
 					Actual:   0,
@@ -180,8 +214,8 @@ func genData() *neso.Data {
 				},
 			},
 			{
-				From: "2026-03-24T13:30Z",
-				To:   "2026-03-24T14:00Z",
+				From: time.Date(2026, time.Month(3), 24, 13, 30, 00, 00, time.Now().UTC().Location()),
+				To:   time.Date(2026, time.Month(3), 24, 14, 00, 00, 00, time.Now().UTC().Location()),
 				Intensity: neso.Intensity{
 					Forecast: 83,
 					Actual:   0,
@@ -189,8 +223,8 @@ func genData() *neso.Data {
 				},
 			},
 			{
-				From: "2026-03-24T14:00Z",
-				To:   "2026-03-24T14:30Z",
+				From: time.Date(2026, time.Month(3), 24, 14, 00, 00, 00, time.Now().UTC().Location()),
+				To:   time.Date(2026, time.Month(3), 24, 14, 30, 00, 00, time.Now().UTC().Location()),
 				Intensity: neso.Intensity{
 					Forecast: 385,
 					Actual:   0,
@@ -198,8 +232,8 @@ func genData() *neso.Data {
 				},
 			},
 			{
-				From: "2026-03-24T14:30Z",
-				To:   "2026-03-24T15:00Z",
+				From: time.Date(2026, time.Month(3), 24, 14, 30, 00, 00, time.Now().UTC().Location()),
+				To:   time.Date(2026, time.Month(3), 24, 15, 00, 00, 00, time.Now().UTC().Location()),
 				Intensity: neso.Intensity{
 					Forecast: 138,
 					Actual:   0,
@@ -207,8 +241,8 @@ func genData() *neso.Data {
 				},
 			},
 			{
-				From: "2026-03-24T15:00Z",
-				To:   "2026-03-24T15:30Z",
+				From: time.Date(2026, time.Month(3), 24, 15, 00, 00, 00, time.Now().UTC().Location()),
+				To:   time.Date(2026, time.Month(3), 24, 15, 30, 00, 00, time.Now().UTC().Location()),
 				Intensity: neso.Intensity{
 					Forecast: 1,
 					Actual:   0,

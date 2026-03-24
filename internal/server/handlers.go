@@ -2,28 +2,28 @@ package server
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
-	"time"
+
+	"github.com/lstratta/flatpeak-take-home-task/internal/neso"
 )
 
 func (s *serveMux) testHandler() http.Handler {
-return http.HandlerFunc( func(w http.ResponseWriter, r *http.Request) {
-		fmt.Println("test handler reached")
-		d := struct{
-			Name string `json:"name"`
-			Date time.Time `json:"date"`
-		}{
-			Name: "Luke",
-			Date: time.Now(),
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		d, err := neso.GetNesoData()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(err)
+			return
 		}
 
 		b, err := json.Marshal(d)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			log.Println(err)
+			return
 		}
-    
+
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(b)
 		if err != nil {

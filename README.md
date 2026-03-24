@@ -22,5 +22,4 @@ Using Nix? Run:
 ```bash
 nix develop
 ```
-
-
+```

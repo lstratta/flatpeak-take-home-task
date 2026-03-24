@@ -18,6 +18,8 @@
         gopls
         gotools
         just
+        gnumake
+        air
       ];
       # shellHook sets the SHELL envar because there is a bug in Nixos
         # that incorrectly loads a sub-shell, causing broken prompts.

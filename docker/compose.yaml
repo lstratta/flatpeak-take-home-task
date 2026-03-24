@@ -1,0 +1,7 @@
+services:
+  carbon-intensity: 
+    image: flatpeak/carbon-intensity:latest
+    container_name: carbon-intensity
+    restart: always
+    ports:
+    - 7777:7777

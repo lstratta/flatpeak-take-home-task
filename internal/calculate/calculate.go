@@ -34,8 +34,6 @@ func FilterPeriodsByLowestIntensity(pArr []neso.Period, duration time.Duration) 
 	timeSpan := int(math.Ceil(float64(duration.Minutes()) / float64(fixedTimePeriod)))
 	indexes := []index{veryLowIndex, lowIndex, moderateIndex, highIndex}
 
-	fmt.Println("timeSpan: ", timeSpan)
-
 	k := 0
 	for _, idx := range indexes {
 		for _, p := range pArr {
@@ -43,6 +41,8 @@ func FilterPeriodsByLowestIntensity(pArr []neso.Period, duration time.Duration) 
 			if idx == index(p.Intensity.Index) {
 				lowPeriods = append(lowPeriods, p)
 				k++
+			} else {
+				continue
 			}
 			if k == timeSpan {
 				break
@@ -53,9 +53,7 @@ func FilterPeriodsByLowestIntensity(pArr []neso.Period, duration time.Duration) 
 		}
 	}
 
-	fmt.Println("before sort", lowPeriods)
 	sort.Sort(neso.ByDateSorter(lowPeriods))
-	fmt.Println("after sort", lowPeriods)
 	return lowPeriods, nil
 }
 
@@ -83,7 +81,7 @@ func FilterPeriodsByDuration(pArr []neso.Period, duration time.Duration) ([]neso
 	return selectedPeriods, nil
 }
 
-func CalculateWeightedAverageForTimePeriod(pArr []neso.Period, duration time.Duration) ([]Slot, error) {
+func CalculateWeightedAverageForTimePeriodByDuration(pArr []neso.Period, duration time.Duration) ([]Slot, error) {
 	s := []Slot{}
 
 	for _, p := range pArr {
@@ -106,14 +104,15 @@ func CalculateWeightedAverageForTimePeriod(pArr []neso.Period, duration time.Dur
 		return s, nil
 	}
 
-	weight := timeRemainder / fixedTimePeriodInt64
+	weight := float64(timeRemainder) / float64(fixedTimePeriodInt64)
 	l := len(s)
 	if l < 1 {
 		return nil, fmt.Errorf("slice length too short")
 	}
 
-	s[l-1].Carbon.Intensity = s[l-1].Carbon.Intensity * weight
+	i := float64(s[l-1].Carbon.Intensity) * weight
 
+	s[l-1].Carbon.Intensity = int64(math.Round(i))
 	return s, nil
 }
 

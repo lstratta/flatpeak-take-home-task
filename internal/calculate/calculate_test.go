@@ -1,7 +1,6 @@
 package calculate
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -19,7 +18,7 @@ func Test_FilterPeriodsByLowestInensity_ReturnSlots(t *testing.T) {
 		{2, "45m"},
 		{3, "61m"},
 		{7, "184m"},
-		{10, "1440m"},
+		{12, "1440m"},
 	}
 
 	d := genData()
@@ -39,9 +38,6 @@ func Test_FilterPeriodsByLowestInensity_ReturnSlots(t *testing.T) {
 		if actualLen != tab.target {
 			t.Errorf("required length: %d, actual: %d", tab.target, actualLen)
 		}
-
-		fmt.Printf("%v\n", pArr)
-
 	}
 
 }
@@ -86,9 +82,9 @@ func Test_CalculateWeightedAverageForLastPeriodInSlice_ReturnsCorrectIntensity(t
 	}{
 		{13, "30m"},
 		{1, "60m"},
-		{56, "90m"},
-		{70, "45m"},
-		{75, "61m"},
+		{18, "90m"},
+		{1, "45m"},
+		{1, "61m"},
 	}
 
 	d := genData()
@@ -103,10 +99,19 @@ func Test_CalculateWeightedAverageForLastPeriodInSlice_ReturnsCorrectIntensity(t
 			t.Errorf("error FilterPeriodsByLowestIntensity: %v", err)
 		}
 
-		slots, err := CalculateWeightedAverageForTimePeriod(pArr, dur)
+		slots, err := CalculateWeightedAverageForTimePeriodByDuration(pArr, dur)
 		if err != nil {
 			t.Errorf("error calculating continuous period: %v", err)
 		}
+
+		// if tab.duration == "45m" {
+		// 	jsonData, _ := json.MarshalIndent(slots, "", "  ")
+		// 	fmt.Println(string(jsonData))
+		// }
+		// if tab.duration == "61m" {
+		// 	jsonData, _ := json.MarshalIndent(slots, "", "  ")
+		// 	fmt.Println(string(jsonData))
+		// }
 
 		l := len(slots)
 		if l < 1 {
@@ -247,6 +252,24 @@ func genData() *neso.Data {
 					Forecast: 1,
 					Actual:   0,
 					Index:    "very low",
+				},
+			},
+			{
+				From: time.Date(2026, time.Month(3), 24, 15, 30, 00, 00, time.Now().UTC().Location()),
+				To:   time.Date(2026, time.Month(3), 24, 16, 00, 00, 00, time.Now().UTC().Location()),
+				Intensity: neso.Intensity{
+					Forecast: 18,
+					Actual:   0,
+					Index:    "very low",
+				},
+			},
+			{
+				From: time.Date(2026, time.Month(3), 24, 16, 00, 00, 00, time.Now().UTC().Location()),
+				To:   time.Date(2026, time.Month(3), 24, 16, 30, 00, 00, time.Now().UTC().Location()),
+				Intensity: neso.Intensity{
+					Forecast: 101,
+					Actual:   0,
+					Index:    "moderate",
 				},
 			},
 		},

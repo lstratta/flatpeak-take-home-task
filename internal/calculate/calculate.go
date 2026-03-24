@@ -32,16 +32,18 @@ func FilterPeriodsByLowIntensity(p []neso.Period) ([]neso.Period, error) {
 	return lowPeriods, nil
 }
 
-func FilterPeriodsByDuration(p []neso.Period, duration time.Duration) ([]neso.Period, error) {
+func FilterPeriodsByDuration(pArr []neso.Period, duration time.Duration) ([]neso.Period, error) {
 	var selectedPeriods []neso.Period
-	startTime, err := formatTime(p[0].From)
+	var fixedTimePeriod time.Duration = 30
+
+	startTime, err := formatTime(pArr[0].From)
 	if err != nil {
 		return nil, fmt.Errorf("error formatting time: %v", err)
 	}
 
-	for i := range p {
-		idx := p[i]
-		endTime, err := formatTime(p[i].To)
+	for i := range pArr {
+		idx := pArr[i]
+		endTime, err := formatTime(pArr[i].To)
 		if err != nil {
 			return nil, fmt.Errorf("error formatting time: %v", err)
 		}
@@ -52,7 +54,19 @@ func FilterPeriodsByDuration(p []neso.Period, duration time.Duration) ([]neso.Pe
 		}
 	}
 
+	// Capture the period any duration over 30 mins overflows into
+	timeRemainder := int(duration.Minutes()) % int(fixedTimePeriod)
+	if timeRemainder > 0 {
+		l := len(selectedPeriods)
+		selectedPeriods = append(selectedPeriods, pArr[l])
+	}
 	return selectedPeriods, nil
+}
+
+func CalculateContinuousPeriod(pArr []neso.Period) (*neso.Period, error) {
+	p := &neso.Period{}
+
+	return p, nil
 }
 
 func formatTime(s string) (time.Time, error) {

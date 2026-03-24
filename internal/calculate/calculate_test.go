@@ -11,19 +11,34 @@ func Test_Example(t *testing.T) {
 }
 
 func Test_FilterLowInensitySlots_Returns2Slots(t *testing.T) {
-	target := 2
-
-	ls, err := FilterLowIntensitySlots(genData())
+	targetLen := 2
+	d := genData()
+	ls, err := FilterLowIntensitySlots(d)
 	if err != nil {
 		t.Errorf("error filtering low intensity slots: %v", err)
 	}
 
-	actual := len(ls)
+	actualLen := len(ls)
 
-	if actual != 2 {
-		t.Errorf("required length: %d, actual: %d", target, actual)
+	if actualLen != targetLen {
+		t.Errorf("required length: %d, actual: %d", targetLen, actualLen)
 	}
 
+}
+
+func Test_FilterByDurationWhereContinuousIsFalse_Returns1Slot(t *testing.T) {
+	d := genData()
+	targetLen := 1
+
+	ls, err := FilterByDuration(d, 30, false)
+	if err != nil {
+		t.Errorf("error filtering by duration: %v", err)
+	}
+
+	actualLen := len(ls)
+	if actualLen != targetLen {
+		t.Errorf("required length: %d, actual: %d", targetLen, actualLen)
+	}
 }
 
 func genData() *neso.Data {

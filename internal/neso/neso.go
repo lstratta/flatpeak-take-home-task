@@ -8,10 +8,10 @@ import (
 )
 
 type Data struct {
-	Data []Neso `json:"data"`
+	Data []Period `json:"data"`
 }
 
-type Neso struct {
+type Period struct {
 	From      string    `json:"from"`
 	To        string    `json:"to"`
 	Intensity Intensity `json:"intensity"`

@@ -7,7 +7,7 @@ import (
 	"github.com/lstratta/flatpeak-take-home-task/internal/neso"
 )
 
-type slots struct {
+type slot struct {
 	ValidFrom time.Time `json:"valid_from"`
 	ValidTo   time.Time `json:"valid_to"`
 	Carbon    carbon    `json:"carbon"`
@@ -17,36 +17,22 @@ type carbon struct {
 	Intensity int64 `json:"intensity"`
 }
 
-func FilterLowIntensitySlots(s *neso.Data) ([]slots, error) {
-	var lowSlots []slots
+func FilterLowIntensityPeriods(p []neso.Period) ([]neso.Period, error) {
+	var lowPeriods []neso.Period
 
-	for i := range s.Data {
-		idx := s.Data[i]
+	for i := range p {
+		idx := p[i]
 		if idx.Intensity.Index != "low" {
 			continue
 		}
 
-		from, err := formatTime(idx.From)
-		if err != nil {
-			return nil, fmt.Errorf("error formatting from time: %v", err)
-		}
-		to, err := formatTime(idx.To)
-		if err != nil {
-			return nil, fmt.Errorf("error formatting to time: %v", err)
-		}
-		acceptedSlot := slots{
-			ValidFrom: from,
-			ValidTo:   to,
-			Carbon: carbon{
-				Intensity: idx.Intensity.Forecast,
-			},
-		}
-
-		lowSlots = append(lowSlots, acceptedSlot)
+		lowPeriods = append(lowPeriods, idx)
 	}
 
-	return lowSlots, nil
+	return lowPeriods, nil
 }
+
+func FilterByDuration(p []neso.Period, duration int64, isContinuous bool) ([]neso.Period, error)
 
 func formatTime(s string) (time.Time, error) {
 	// remove end Z character
@@ -61,3 +47,25 @@ func formatTime(s string) (time.Time, error) {
 
 	return t, nil
 }
+
+// func hold() {
+//
+// 	from, err := formatTime(idx.From)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("error formatting from time: %v", err)
+// 	}
+// 	to, err := formatTime(idx.To)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("error formatting to time: %v", err)
+// 	}
+// 	acceptedSlot := slot{
+// 		ValidFrom: from,
+// 		ValidTo:   to,
+// 		Carbon: carbon{
+// 			Intensity: idx.Intensity.Forecast,
+// 		},
+// 	}
+//
+// 	lowSlots = append(lowSlots, acceptedSlot)
+//
+// }

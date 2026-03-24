@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/lstratta/flatpeak-take-home-task/internal/calculate"
 	"github.com/lstratta/flatpeak-take-home-task/internal/neso"
@@ -11,7 +12,6 @@ import (
 
 func (s *serveMux) slotsHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		intensity := "low"
 		d, err := neso.GetNesoData()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -19,7 +19,9 @@ func (s *serveMux) slotsHandler() http.Handler {
 			return
 		}
 
-		lowSlots, err := calculate.FilterPeriodsByIntensity(d.Data, intensity)
+		var dur time.Duration = 30
+
+		lowSlots, err := calculate.FilterPeriodsByLowestIntensity(d.Data, dur)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)

@@ -28,13 +28,29 @@ const (
 	fixedTimePeriod time.Duration = 30
 )
 
-func FilterPeriodsByLowestIntensity(p []neso.Period, duration time.Duration) ([]neso.Period, error) {
+func FilterPeriodsByLowestIntensity(pArr []neso.Period, duration time.Duration) ([]neso.Period, error) {
 	var lowPeriods []neso.Period
+	timeSpan := int(math.Ceil(float64(duration.Minutes()) / float64(fixedTimePeriod)))
+	indexes := []index{veryLowIndex, lowIndex, moderateIndex, highIndex}
 
-	for i := range p {
-		idx := p[i]
+	fmt.Println("timeSpan: ", timeSpan)
 
-		lowPeriods = append(lowPeriods, idx)
+	k := 0
+	for _, idx := range indexes {
+		for _, p := range pArr {
+
+			if idx == index(p.Intensity.Index) {
+				lowPeriods = append(lowPeriods, p)
+				k++
+			}
+			if k == timeSpan {
+				break
+			}
+		}
+		if k == timeSpan {
+			break
+		}
+
 	}
 
 	return lowPeriods, nil

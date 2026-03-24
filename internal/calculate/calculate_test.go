@@ -1,13 +1,14 @@
 package calculate
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
 	"github.com/lstratta/flatpeak-take-home-task/internal/neso"
 )
 
-func Test_FilterPeriodsByLowInensity_Returns2Slots(t *testing.T) {
+func Test_FilterPeriodsByLowInensity_ReturnSlots(t *testing.T) {
 	var tests = []struct {
 		target   int
 		duration string
@@ -17,6 +18,8 @@ func Test_FilterPeriodsByLowInensity_Returns2Slots(t *testing.T) {
 		{5, "150m"},
 		{2, "45m"},
 		{3, "61m"},
+		{7, "184m"},
+		{10, "1440m"},
 	}
 
 	d := genData()
@@ -26,16 +29,18 @@ func Test_FilterPeriodsByLowInensity_Returns2Slots(t *testing.T) {
 			t.Errorf("error parsing duration: %v", err)
 		}
 
-		ls, err := FilterPeriodsByLowestIntensity(d.Data, dur)
+		pArr, err := FilterPeriodsByLowestIntensity(d.Data, dur)
 		if err != nil {
 			t.Errorf("error filtering low intensity slots: %v", err)
 		}
 
-		actualLen := len(ls)
+		actualLen := len(pArr)
 
 		if actualLen != tab.target {
 			t.Errorf("required length: %d, actual: %d", tab.target, actualLen)
 		}
+
+		fmt.Printf("%v\n", pArr)
 
 	}
 
@@ -72,6 +77,10 @@ func Test_FilterPeriodsByDuration_ReturnsSlots(t *testing.T) {
 			t.Errorf("required length: %d, actual: %d", tab.target, actualLen)
 		}
 	}
+}
+
+func Test_CalculateNonContinuousPeriod_ReturnsCorrectAverage(t *testing.T) {
+
 }
 
 func Test_CalculateContinuousPeriod_ReturnsCorrectAverage(t *testing.T) {
@@ -174,9 +183,36 @@ func genData() *neso.Data {
 				From: "2026-03-24T13:30Z",
 				To:   "2026-03-24T14:00Z",
 				Intensity: neso.Intensity{
-					Forecast: 77,
+					Forecast: 83,
 					Actual:   0,
 					Index:    "low",
+				},
+			},
+			{
+				From: "2026-03-24T14:00Z",
+				To:   "2026-03-24T14:30Z",
+				Intensity: neso.Intensity{
+					Forecast: 385,
+					Actual:   0,
+					Index:    "high",
+				},
+			},
+			{
+				From: "2026-03-24T14:30Z",
+				To:   "2026-03-24T15:00Z",
+				Intensity: neso.Intensity{
+					Forecast: 138,
+					Actual:   0,
+					Index:    "moderate",
+				},
+			},
+			{
+				From: "2026-03-24T15:00Z",
+				To:   "2026-03-24T15:30Z",
+				Intensity: neso.Intensity{
+					Forecast: 1,
+					Actual:   0,
+					Index:    "very low",
 				},
 			},
 		},

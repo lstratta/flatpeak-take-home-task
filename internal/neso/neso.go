@@ -3,21 +3,22 @@ package neso
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"time"
 )
 
-type data struct {
-	Data []neso `json:"data"`
+type Data struct {
+	Data []Neso `json:"data"`
 }
 
-type neso struct {
+type Neso struct {
 	From      string    `json:"from"`
 	To        string    `json:"to"`
-	Intensity intensity `json:"intensity"`
+	Intensity Intensity `json:"intensity"`
 }
 
-type intensity struct {
+type Intensity struct {
 	Forecast int64  `json:"forecast"`
 	Actual   int64  `json:"actual"`
 	Index    string `json:"index"`
@@ -29,7 +30,7 @@ const (
 	NESO_FW24H          string = "fw24h"
 )
 
-func GetNesoData() (*data, error) {
+func GetNesoData() (*Data, error) {
 	from := time.Now().Format(time.RFC3339) // RFC3339 = "2006-01-02T15:04:05Z07:00"
 	url := fmt.Sprintf("%s/%s/%s/%s", NESO_API, NESO_INTENSITY_PATH, from, NESO_FW24H)
 	fmt.Println(url)
@@ -44,11 +45,13 @@ func GetNesoData() (*data, error) {
 		return nil, fmt.Errorf("error converting response: %v", err)
 	}
 
+	log.Printf("The length of the array is: %d", len(d.Data))
+
 	return d, nil
 }
 
-func convertResToData(res *http.Response) (*data, error) {
-	d := data{}
+func convertResToData(res *http.Response) (*Data, error) {
+	d := Data{}
 
 	if err := json.NewDecoder(res.Body).Decode(&d); err != nil {
 		return nil, fmt.Errorf("error decoding json data: %v", err)

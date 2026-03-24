@@ -1,4 +1,4 @@
-package server 
+package server
 
 import "net/http"
 
@@ -10,8 +10,7 @@ func NewServeMux() *serveMux {
 	return &serveMux{http.NewServeMux()}
 }
 
-
 func (m *serveMux) AddRoutes() {
-	m.Handle("GET /", Logger(m.testHandler()))
+	m.Handle("GET /", Logger(m.slotsHandler()))
 	m.Handle("GET /health", m.healthHandler())
 }

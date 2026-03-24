@@ -2,7 +2,6 @@ package calculate
 
 import (
 	"fmt"
-	"log"
 	"time"
 
 	"github.com/lstratta/flatpeak-take-home-task/internal/neso"
@@ -45,8 +44,6 @@ func FilterLowIntensitySlots(s *neso.Data) ([]slots, error) {
 
 		lowSlots = append(lowSlots, acceptedSlot)
 	}
-
-	log.Printf("length of lowSlots: %d", len(lowSlots))
 
 	return lowSlots, nil
 }

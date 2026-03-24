@@ -3,7 +3,6 @@ package neso
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"time"
 )
@@ -44,8 +43,6 @@ func GetNesoData() (*Data, error) {
 	if err != nil {
 		return nil, fmt.Errorf("error converting response: %v", err)
 	}
-
-	log.Printf("The length of the array is: %d", len(d.Data))
 
 	return d, nil
 }

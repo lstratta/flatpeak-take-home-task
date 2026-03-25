@@ -54,7 +54,13 @@ func (s *serveMux) slotsHandler() http.Handler {
 			return
 		}
 
-		slots, err := logic(d, duration, isContinuous)
+		if duration.Minutes() < 0 || duration.Minutes() > 1440 {
+			w.WriteHeader(http.StatusBadRequest)
+			log.Println("duration out of range: ", duration.Minutes())
+			return
+		}
+
+		slots, err := calculations(d, duration, isContinuous)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println("error handling logic: ", err)
@@ -84,10 +90,11 @@ func (s *serveMux) slotsHandler() http.Handler {
 	})
 }
 
-func logic(d *models.Data, duration time.Duration, isContinuous bool) ([]models.Slot, error) {
+func calculations(d *models.Data, duration time.Duration, isContinuous bool) ([]models.Slot, error) {
+	c := calculate.NewCalculationService()
 	slots := []models.Slot{}
 
-	pArr, err := calculate.FilterPeriodsByLowestIntensity(d.Data, duration)
+	pArr, err := c.FilterPeriodsByLowestIntensity(d.Data, duration)
 	if err != nil {
 		return nil, fmt.Errorf("error calculating lowest intesity: %v", err)
 	}
@@ -96,13 +103,13 @@ func logic(d *models.Data, duration time.Duration, isContinuous bool) ([]models.
 	// else, return all the number of lowest periods over the next 24 hours that fit
 	// within the given time duration
 	if isContinuous {
-		slot, err := calculate.CalculateContinuousPeriodIntensity(pArr, duration)
+		slot, err := c.CalculateContinuousPeriodIntensity(pArr, duration)
 		if err != nil {
 			return nil, fmt.Errorf("error calculating continuous period by duration: %v", err)
 		}
 		slots = append(slots, *slot)
 	} else {
-		slots, err = calculate.CalculateWeightedAverage(pArr, duration)
+		slots, err = c.CalculateWeightedAverage(pArr, duration)
 		if err != nil {
 			return nil, fmt.Errorf("error calculating weighted average: %v", err)
 		}

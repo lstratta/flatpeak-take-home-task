@@ -15,7 +15,14 @@ const (
 	fixedTimePeriod time.Duration = 1_800_000_000_000 // nanoseconds
 )
 
-func FilterPeriodsByLowestIntensity(pArr []models.Period, dur time.Duration) ([]models.Period, error) {
+type CalculationService struct {
+}
+
+func NewCalculationService() *CalculationService {
+	return &CalculationService{}
+}
+
+func (c *CalculationService) FilterPeriodsByLowestIntensity(pArr []models.Period, dur time.Duration) ([]models.Period, error) {
 	var lowPeriods []models.Period
 
 	timeSpan := int64(math.Ceil(dur.Minutes() / fixedTimePeriod.Minutes()))
@@ -43,31 +50,7 @@ func FilterPeriodsByLowestIntensity(pArr []models.Period, dur time.Duration) ([]
 	return lowPeriods, nil
 }
 
-func FilterPeriodsByDuration(pArr []models.Period, duration time.Duration) ([]models.Period, error) {
-	var selectedPeriods []models.Period
-
-	startTime := pArr[0].From
-
-	for i := range pArr {
-		idx := pArr[i]
-		endTime := pArr[i].To
-
-		diff := endTime.Sub(startTime)
-		if diff <= duration {
-			selectedPeriods = append(selectedPeriods, idx)
-		}
-	}
-
-	// Capture the period any duration over 30 mins overflows into
-	timeRemainder := int(duration.Minutes()) % int(fixedTimePeriod.Minutes())
-	if timeRemainder > 0 {
-		l := len(selectedPeriods)
-		selectedPeriods = append(selectedPeriods, pArr[l])
-	}
-	return selectedPeriods, nil
-}
-
-func CalculateWeightedAverage(pArr []models.Period, duration time.Duration) ([]models.Slot, error) {
+func (c *CalculationService) CalculateWeightedAverage(pArr []models.Period, duration time.Duration) ([]models.Slot, error) {
 	s := []models.Slot{}
 
 	for _, p := range pArr {
@@ -110,7 +93,7 @@ func CalculateWeightedAverage(pArr []models.Period, duration time.Duration) ([]m
 	return s, nil
 }
 
-func CalculateContinuousPeriodIntensity(pArr []models.Period, duration time.Duration) (*models.Slot, error) {
+func (c *CalculationService) CalculateContinuousPeriodIntensity(pArr []models.Period, duration time.Duration) (*models.Slot, error) {
 	weight := 0.0
 	totalIntensity := 0.0
 

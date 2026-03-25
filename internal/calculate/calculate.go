@@ -123,52 +123,67 @@ func (c *CalculationService) CalculateContinuousPeriodIntensity(pArr []models.Pe
 	weight := 0.0
 	totalIntensity := 0.0
 
-	l := len(pArr)
-	if l < 1 {
+	arrLength := len(pArr)
+	if arrLength < 1 {
 		return nil, fmt.Errorf("array length 0")
 	}
+
+	lastElem := pArr[arrLength-1]
+
 	timeRemainder := int(duration.Minutes()) % int(fixedTimePeriod.Minutes())
-	if timeRemainder > 0 {
-		fmt.Println("timeRemainder", timeRemainder)
-		weight = float64(timeRemainder) / float64(fixedTimePeriod.Minutes())
-
-		fmt.Println("weight: ", weight)
-		totalIntensity = float64(pArr[l-1].Intensity.Forecast) * weight
-
-		for i := range l {
-			// skip the last element of the slice
-			if i == l-1 {
-				continue
-			}
-			totalIntensity += float64(pArr[i].Intensity.Forecast)
-		}
-	} else {
+	if timeRemainder <= 0 {
 		weight = 1.0
 
 		for _, p := range pArr {
 			totalIntensity += float64(p.Intensity.Forecast)
 		}
+
+		averageIntensity := totalIntensity / (float64(arrLength) - 1 + weight)
+
+		intensity := int64(math.Round(averageIntensity))
+		s := &models.Slot{
+			ValidFrom: pArr[0].From,
+			ValidTo:   lastElem.To,
+			Carbon: models.Carbon{
+				Intensity: intensity,
+			},
+		}
+
+		return s, nil
+
 	}
 
-	averageIntensity := totalIntensity / (float64(l) - 1 + weight)
+	// handle durations that are not multiples of 30
+	// e.g. 13, 45, 61
+	weight = float64(timeRemainder) / float64(fixedTimePeriod.Minutes())
 
-	intensity := int64(math.Round(averageIntensity))
+	totalIntensity = float64(lastElem.Intensity.Forecast) * weight
+
+	for i := range arrLength {
+		// skip the last element of the slice
+		if i == arrLength-1 {
+			continue
+		}
+		totalIntensity += float64(pArr[i].Intensity.Forecast)
+	}
+
 	timeRemainderDuration, err := time.ParseDuration(fmt.Sprint(strconv.Itoa(int(fixedTimePeriod.Minutes())-timeRemainder), "m"))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing duration: %v", err)
 	}
 
-	fmt.Println("timeRemainderDuration", timeRemainderDuration)
+	averageIntensity := totalIntensity
+	if arrLength != 1 {
+		averageIntensity = totalIntensity / (float64(arrLength) - 1 + weight)
+	}
 
-	fmt.Println("pArr: ", pArr)
-
+	intensity := int64(math.Round(averageIntensity))
 	s := &models.Slot{
 		ValidFrom: pArr[0].From,
-		ValidTo:   pArr[len(pArr)-1].To.Add(-timeRemainderDuration),
+		ValidTo:   lastElem.To.Add(-timeRemainderDuration),
 		Carbon: models.Carbon{
 			Intensity: intensity,
 		},
 	}
-
 	return s, nil
 }

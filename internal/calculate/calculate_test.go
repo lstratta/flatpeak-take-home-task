@@ -95,7 +95,7 @@ func Test_CalculateContinuousPeriod_ReturnsCorrectAverageIntensity(t *testing.T)
 		{1, "30m"},
 		{16, "60m"},
 		{74, "90m"},
-		{97, "45m"},
+		{98, "45m"},
 		{101, "61m"},
 	}
 

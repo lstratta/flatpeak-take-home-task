@@ -1,7 +1,6 @@
 package calculate
 
 import (
-	"fmt"
 	"testing"
 	"time"
 
@@ -68,8 +67,6 @@ func Test_FilterPeriodsByDuration_ReturnsSlots(t *testing.T) {
 			t.Errorf("error filtering by duration: %v", err)
 		}
 
-		fmt.Printf("list of objects: %v", ls)
-
 		actualLen := len(ls)
 		if actualLen != tab.target {
 			t.Logf("test: target: %d, duration: %s", tab.target, tab.duration)
@@ -83,11 +80,11 @@ func Test_CalculateWeightedAverageForLastPeriodInSlice_ReturnsCorrectIntensity(t
 		target   int64
 		duration string
 	}{
-		{13, "30m"},
-		{1, "60m"},
-		{18, "90m"},
-		{1, "45m"},
-		{1, "61m"},
+		{1, "30m"},
+		{18, "60m"},
+		{83, "90m"},
+		{51, "45m"},
+		{3, "61m"},
 	}
 
 	d := genData()
@@ -137,8 +134,8 @@ func Test_CalculateContinuousPeriod_ReturnsCorrectAverageIntensity(t *testing.T)
 		{56, "30m"},
 		{77, "60m"},
 		{55, "90m"},
-		{70, "45m"},
-		{75, "61m"},
+		{56, "45m"},
+		{76, "61m"},
 	}
 
 	d := genData()

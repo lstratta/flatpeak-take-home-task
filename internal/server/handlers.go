@@ -2,6 +2,7 @@ package server
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"strconv"
@@ -18,9 +19,10 @@ func (s *serveMux) slotsHandler() http.Handler {
 
 		durParam := q["duration"]
 		isContinuousParam := q["continuous"]
+		fmt.Println("len of isContinuousParam: ", len(isContinuousParam))
 
 		// if durParam is empty, use 30 default value
-		if len(durParam) < 1 || len(isContinuousParam) < 1 {
+		if len(durParam) < 1 {
 			durParam = []string{"30"}
 		}
 
@@ -29,12 +31,13 @@ func (s *serveMux) slotsHandler() http.Handler {
 			isContinuousParam = []string{"false"}
 		}
 
+		fmt.Println(isContinuousParam)
+
 		dur := durParam[0]
 		isContinuousString := isContinuousParam[0]
 
 		isContinuous, err := strconv.ParseBool(isContinuousString)
 		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
 			log.Println("error converting continuous url param to bool")
 			return
 		}
@@ -42,7 +45,7 @@ func (s *serveMux) slotsHandler() http.Handler {
 		d, err := neso.GetNesoData()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(err)
+			log.Println("error getting data", err)
 			return
 		}
 
@@ -50,38 +53,24 @@ func (s *serveMux) slotsHandler() http.Handler {
 		duration, err := time.ParseDuration(durInMinutes)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			log.Println("error parsing duration")
+			log.Println("error parsing duration: ", err)
 			return
 		}
 
-		pArr, err := calculate.FilterPeriodsByLowestIntensity(d.Data, duration)
+		slots, err := logic(d, duration, isContinuous)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(err)
+			log.Println("error handling logic: ", err)
 			return
 		}
 
-		var slots []models.Slot
-
-		if isContinuous {
-			slot, err := calculate.CalculateContinuousPeriodIntensity(pArr, duration)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				log.Printf("error calculating continuous period by duration: %v", err)
-				return
-			}
-			slots = append(slots, *slot)
-		} else {
-			slots, err = calculate.CalculateWeightedAverage(pArr, duration)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				log.Printf("error calculating weighted average: %v", err)
-				return
-			}
-
+		data := struct {
+			Data []models.Slot `json:"data"`
+		}{
+			Data: slots,
 		}
 
-		b, err := json.Marshal(&slots)
+		b, err := json.Marshal(&data)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Printf("error marshalling object to json: %v", err)
@@ -96,6 +85,33 @@ func (s *serveMux) slotsHandler() http.Handler {
 			return
 		}
 	})
+}
+
+func logic(d *models.Data, duration time.Duration, isContinuous bool) ([]models.Slot, error) {
+	slots := []models.Slot{}
+
+	pArr, err := calculate.FilterPeriodsByLowestIntensity(d.Data, duration)
+	if err != nil {
+		return nil, fmt.Errorf("error calculating lowest intesity: %v", err)
+	}
+
+	// if isContinuous == true, find the average for all periods and return as one period
+	// else, return all the number of lowest periods over the next 24 hours that fit
+	// within the given time duration
+	if isContinuous {
+		slot, err := calculate.CalculateContinuousPeriodIntensity(pArr, duration)
+		if err != nil {
+			return nil, fmt.Errorf("error calculating continuous period by duration: %v", err)
+		}
+		slots = append(slots, *slot)
+	} else {
+		slots, err = calculate.CalculateWeightedAverage(pArr, duration)
+		if err != nil {
+			return nil, fmt.Errorf("error calculating weighted average: %v", err)
+		}
+	}
+
+	return slots, nil
 }
 
 func (s *serveMux) healthHandler() http.Handler {

@@ -21,20 +21,15 @@ func (s *serveMux) slotsHandler() http.Handler {
 		// validate and convert query params
 		durStr, isContinuousStr := validateSlotsQueryParams(q)
 
-		isContinuous, err := strconv.ParseBool(isContinuousStr)
-		if err != nil {
-			log.Println("error converting continuous url param to bool")
-			return
-		}
-
-		durInMinutes := durStr + "m"
-		duration, err := time.ParseDuration(durInMinutes)
+		duration, isContinuous, err := convertData(durStr, isContinuousStr)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			log.Println("error parsing duration: ", err)
+			log.Printf("error converting data: %v\n", err)
 			return
 		}
 
+		// if specified dduration is out of bounds, return
+		// StatusBadRequest
 		if duration.Minutes() < 0 || duration.Minutes() > 1440 {
 			w.WriteHeader(http.StatusBadRequest)
 			log.Println("duration out of range: ", duration.Minutes())
@@ -78,6 +73,21 @@ func (s *serveMux) slotsHandler() http.Handler {
 			return
 		}
 	})
+}
+
+func convertData(dStr, cStr string) (duration time.Duration, isContinuous bool, err error) {
+	isContinuous, err = strconv.ParseBool(cStr)
+	if err != nil {
+		return 0, false, fmt.Errorf("error converting continuous url param to bool: %v", err)
+	}
+
+	durInMinutes := dStr + "m"
+	duration, err = time.ParseDuration(durInMinutes)
+	if err != nil {
+		return 0, false, fmt.Errorf("error parsing duration: %v", err)
+
+	}
+	return duration, isContinuous, nil
 }
 
 func validateSlotsQueryParams(q url.Values) (dur string, isContinuous string) {

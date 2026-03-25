@@ -17,7 +17,6 @@
         go
         gopls
         gotools
-        just
         gnumake
         air
       ];

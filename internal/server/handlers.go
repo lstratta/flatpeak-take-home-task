@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"net/url"
 	"strconv"
 	"time"
 
@@ -15,26 +14,24 @@ import (
 
 func (s *serveMux) slotsHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		u, err := url.Parse(r.URL.RawPath)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
-			log.Println(err)
+		q := r.URL.Query()
+
+		durParam := q["duration"]
+		isContinuousParam := q["continuous"]
+
+		if len(durParam) < 1 || len(isContinuousParam) < 1 {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println("missing url parameter")
 			return
 		}
 
-		q := u.Query()
-		durParam := q["duration"][0]
-		isContinuousParam := q["continuous"][0]
+		dur := durParam[0]
+		isContinuousString := isContinuousParam[0]
 
-		dur, err := strconv.Atoi(durParam)
+		isContinuous, err := strconv.ParseBool(isContinuousString)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-
-		isContinuous, err := strconv.ParseBool(isContinuousParam)
-		if err != nil {
-			w.WriteHeader(http.StatusBadRequest)
+			log.Println("error converting continuous url param to bool")
 			return
 		}
 
@@ -45,40 +42,53 @@ func (s *serveMux) slotsHandler() http.Handler {
 			return
 		}
 
-		duration := time.Duration(dur)
-		pArr, err := calculate.FilterPeriodsByLowestIntensity(d.Data, duration)
+		durInMinutes := dur + "m"
+		duration, err := time.ParseDuration(durInMinutes)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
-			log.Println(err)
+			log.Println("error parsing duration")
+			return
 		}
 
-		var slot *models.Slot
-
-		if isContinuous {
-			fArr, err := calculate.FilterPeriodsByDuration(pArr, duration)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-			slot, err = calculate.CalculateContinuousPeriodIntensity(fArr, duration)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				return
-			}
-		}
-
-		b, err := json.Marshal(&slot)
+		pArr, err := calculate.FilterPeriodsByLowestIntensity(d.Data, duration)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)
 			return
 		}
 
+		var slots []models.Slot
+
+		if isContinuous {
+			fArr, err := calculate.FilterPeriodsByDuration(pArr, duration)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Printf("error calculating FilterPeriodsByDuration: %v", err)
+				return
+			}
+
+			slot, err := calculate.CalculateContinuousPeriodIntensity(fArr, duration)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Printf("error calculating continuous period by duration: %v", err)
+				return
+			}
+			slots = append(slots, *slot)
+		}
+
+		b, err := json.Marshal(&slots)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Printf("error marshalling object to json: %v", err)
+			return
+		}
+
 		w.WriteHeader(http.StatusOK)
 		_, _ = w.Write(b)
 		if err != nil {
-			log.Println("failed to write body")
+			log.Printf("failed to write body: %v", err)
 			w.WriteHeader(http.StatusInternalServerError)
+			return
 		}
 	})
 }
@@ -89,6 +99,8 @@ func (s *serveMux) healthHandler() http.Handler {
 		_, err := w.Write([]byte("service alive"))
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
+			log.Printf("failed to write body: %v", err)
+			return
 		}
 
 	})

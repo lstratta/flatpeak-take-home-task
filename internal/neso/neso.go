@@ -28,7 +28,6 @@ type interval struct {
 func GetNesoData() (*models.Data, error) {
 	from := time.Now().Format(time.RFC3339) // RFC3339 = "2006-01-02T15:04:05Z07:00"
 	url := fmt.Sprintf("%s/%s/%s/%s", NESO_API, NESO_INTENSITY_PATH, from, NESO_FW24H)
-	fmt.Println(url)
 
 	res, err := makeRequestGET(url)
 	if err != nil {
@@ -60,7 +59,6 @@ func convertResToData(res *http.Response) (*models.Data, error) {
 		r.Data[i].To = newDateFormat
 	}
 
-	fmt.Printf("%v", r)
 	data, err := json.Marshal(r)
 	if err != nil {
 		return nil, fmt.Errorf("error marshalling data: %v", err)

@@ -9,38 +9,23 @@ import (
 	"github.com/lstratta/flatpeak-take-home-task/internal/models"
 )
 
-type index string
-
 const (
-	veryLowIndex    index         = "very low"
-	lowIndex        index         = "low"
-	moderateIndex   index         = "moderate"
-	highIndex       index         = "high"
 	fixedTimePeriod time.Duration = 30
 )
 
 func FilterPeriodsByLowestIntensity(pArr []models.Period, duration time.Duration) ([]models.Period, error) {
 	var lowPeriods []models.Period
-	timeSpan := int(math.Ceil(float64(duration.Minutes()) / float64(fixedTimePeriod)))
-	indexes := []index{veryLowIndex, lowIndex, moderateIndex, highIndex}
-
-	k := 0
-	for _, idx := range indexes {
-		for _, p := range pArr {
-
-			if idx == index(p.Intensity.Index) {
-				lowPeriods = append(lowPeriods, p)
-				k++
-			} else {
-				continue
-			}
-			if k == timeSpan {
-				break
+	count := len(pArr)
+	for count > 0 {
+		minItensityIndex := 0
+		for i := 1; i < count; i++ {
+			if pArr[i].Intensity.Forecast < pArr[minItensityIndex].Intensity.Forecast {
+				minItensityIndex = i
 			}
 		}
-		if k == timeSpan {
-			break
-		}
+
+		lowPeriods = append(lowPeriods, pArr[minItensityIndex])
+		count--
 	}
 
 	sort.Sort(models.ByDateSorter(lowPeriods))
@@ -109,8 +94,11 @@ func CalculateWeightedAverageForTimePeriodByDuration(pArr []models.Period, durat
 func CalculateContinuousPeriodIntensity(pArr []models.Period, duration time.Duration) (*models.Slot, error) {
 	weight := 0.0
 	totalIntensity := 0.0
-	l := len(pArr)
 
+	l := len(pArr)
+	if l < 1 {
+		return nil, fmt.Errorf("array length 0")
+	}
 	timeRemainder := int(duration.Minutes()) % int(fixedTimePeriod)
 	if timeRemainder > 0 {
 		weight = float64(timeRemainder) / float64(fixedTimePeriod)

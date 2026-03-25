@@ -1,6 +1,7 @@
 package calculate
 
 import (
+	"fmt"
 	"testing"
 	"time"
 
@@ -66,6 +67,8 @@ func Test_FilterPeriodsByDuration_ReturnsSlots(t *testing.T) {
 		if err != nil {
 			t.Errorf("error filtering by duration: %v", err)
 		}
+
+		fmt.Printf("list of objects: %v", ls)
 
 		actualLen := len(ls)
 		if actualLen != tab.target {

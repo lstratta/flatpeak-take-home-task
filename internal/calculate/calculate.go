@@ -50,6 +50,31 @@ func (c *CalculationService) FilterPeriodsByLowestIntensity(pArr []models.Period
 	return lowPeriods, nil
 }
 
+func (c *CalculationService) FilterPeriodsByDuration(pArr []models.Period, duration time.Duration) ([]models.Period, error) {
+	var selectedPeriods []models.Period
+
+	startTime := pArr[0].From
+
+	for i := range pArr {
+		idx := pArr[i]
+		endTime := pArr[i].To
+
+		diff := endTime.Sub(startTime)
+		if diff <= duration {
+			selectedPeriods = append(selectedPeriods, idx)
+		}
+	}
+
+	// Capture the period any duration over 30 mins overflows into
+	timeRemainder := int(duration.Minutes()) % int(fixedTimePeriod.Minutes())
+	if timeRemainder > 0 {
+		l := len(selectedPeriods)
+		selectedPeriods = append(selectedPeriods, pArr[l])
+	}
+
+	return selectedPeriods, nil
+}
+
 func (c *CalculationService) CalculateWeightedAverage(pArr []models.Period, duration time.Duration) ([]models.Slot, error) {
 	s := []models.Slot{}
 
@@ -90,6 +115,7 @@ func (c *CalculationService) CalculateWeightedAverage(pArr []models.Period, dura
 
 	// update entry.ValidTo with correct duraion from the start of the last element
 	s[l-1].ValidTo = s[l-1].ValidFrom.Add(timeRemainderDuration)
+
 	return s, nil
 }
 
@@ -103,8 +129,12 @@ func (c *CalculationService) CalculateContinuousPeriodIntensity(pArr []models.Pe
 	}
 	timeRemainder := int(duration.Minutes()) % int(fixedTimePeriod.Minutes())
 	if timeRemainder > 0 {
-		weight = float64(timeRemainder) / float64(fixedTimePeriod)
+		fmt.Println("timeRemainder", timeRemainder)
+		weight = float64(timeRemainder) / float64(fixedTimePeriod.Minutes())
+
+		fmt.Println("weight: ", weight)
 		totalIntensity = float64(pArr[l-1].Intensity.Forecast) * weight
+
 		for i := range l {
 			// skip the last element of the slice
 			if i == l-1 {
@@ -114,6 +144,7 @@ func (c *CalculationService) CalculateContinuousPeriodIntensity(pArr []models.Pe
 		}
 	} else {
 		weight = 1.0
+
 		for _, p := range pArr {
 			totalIntensity += float64(p.Intensity.Forecast)
 		}
@@ -122,10 +153,18 @@ func (c *CalculationService) CalculateContinuousPeriodIntensity(pArr []models.Pe
 	averageIntensity := totalIntensity / (float64(l) - 1 + weight)
 
 	intensity := int64(math.Round(averageIntensity))
+	timeRemainderDuration, err := time.ParseDuration(fmt.Sprint(strconv.Itoa(int(timeRemainder)), "m"))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing duration: %v", err)
+	}
+
+	fmt.Println("timeRemainderDuration", timeRemainderDuration)
+
+	fmt.Println("pArr: ", pArr)
 
 	s := &models.Slot{
 		ValidFrom: pArr[0].From,
-		ValidTo:   pArr[len(pArr)-1].To,
+		ValidTo:   pArr[len(pArr)-1].To.Add(-timeRemainderDuration),
 		Carbon: models.Carbon{
 			Intensity: intensity,
 		},
@@ -133,25 +172,3 @@ func (c *CalculationService) CalculateContinuousPeriodIntensity(pArr []models.Pe
 
 	return s, nil
 }
-
-// func hold() {
-//
-// 	from, err := formatTime(idx.From)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("error formatting from time: %v", err)
-// 	}
-// 	to, err := formatTime(idx.To)
-// 	if err != nil {
-// 		return nil, fmt.Errorf("error formatting to time: %v", err)
-// 	}
-// 	acceptedSlot := slot{
-// 		ValidFrom: from,
-// 		ValidTo:   to,
-// 		Carbon: carbon{
-// 			Intensity: idx.Intensity.Forecast,
-// 		},
-// 	}
-//
-// 	lowSlots = append(lowSlots, acceptedSlot)
-//
-// }

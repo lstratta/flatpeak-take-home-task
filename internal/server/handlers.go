@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"net/url"
 	"strconv"
 	"time"
 
@@ -17,36 +18,16 @@ func (s *serveMux) slotsHandler() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		q := r.URL.Query()
 
-		durParam := q["duration"]
-		isContinuousParam := q["continuous"]
+		// validate and convert query params
+		durStr, isContinuousStr := validateSlotsQueryParams(q)
 
-		// if durParam is empty, use 30 default value
-		if len(durParam) < 1 {
-			durParam = []string{"30"}
-		}
-
-		// if isContinuousParam is empty, use false default value
-		if len(isContinuousParam) < 1 {
-			isContinuousParam = []string{"false"}
-		}
-
-		dur := durParam[0]
-		isContinuousString := isContinuousParam[0]
-
-		isContinuous, err := strconv.ParseBool(isContinuousString)
+		isContinuous, err := strconv.ParseBool(isContinuousStr)
 		if err != nil {
 			log.Println("error converting continuous url param to bool")
 			return
 		}
 
-		d, err := neso.GetNesoData()
-		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println("error getting data", err)
-			return
-		}
-
-		durInMinutes := dur + "m"
+		durInMinutes := durStr + "m"
 		duration, err := time.ParseDuration(durInMinutes)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -60,6 +41,15 @@ func (s *serveMux) slotsHandler() http.Handler {
 			return
 		}
 
+		// fetch data from NESO
+		d, err := neso.GetNesoData()
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			log.Println("error getting data", err)
+			return
+		}
+
+		// execute calculations
 		slots, err := calculations(d, duration, isContinuous)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
@@ -90,29 +80,57 @@ func (s *serveMux) slotsHandler() http.Handler {
 	})
 }
 
+func validateSlotsQueryParams(q url.Values) (dur string, isContinuous string) {
+	durParam := q["duration"]
+	isContinuousParam := q["continuous"]
+
+	// if durParam is empty, use 30 default value
+	if len(durParam) < 1 {
+		durParam = []string{"30"}
+	}
+
+	// if isContinuousParam is empty, use false default value
+	if len(isContinuousParam) < 1 {
+		isContinuousParam = []string{"false"}
+	}
+
+	dur = durParam[0]
+	isContinuous = isContinuousParam[0]
+	return dur, isContinuous
+}
+
 func calculations(d *models.Data, duration time.Duration, isContinuous bool) ([]models.Slot, error) {
 	c := calculate.NewCalculationService()
 	slots := []models.Slot{}
 
-	pArr, err := c.FilterPeriodsByLowestIntensity(d.Data, duration)
-	if err != nil {
-		return nil, fmt.Errorf("error calculating lowest intesity: %v", err)
-	}
+	data := d.Data
 
 	// if isContinuous == true, find the average for all periods and return as one period
 	// else, return all the number of lowest periods over the next 24 hours that fit
 	// within the given time duration
 	if isContinuous {
-		slot, err := c.CalculateContinuousPeriodIntensity(pArr, duration)
+		p, err := c.FilterPeriodsByDuration(data, duration)
+		if err != nil {
+			return nil, fmt.Errorf("error filtering periods by duration: %v", err)
+		}
+
+		slot, err := c.CalculateContinuousPeriodIntensity(p, duration)
 		if err != nil {
 			return nil, fmt.Errorf("error calculating continuous period by duration: %v", err)
 		}
+
 		slots = append(slots, *slot)
+
 	} else {
-		slots, err = c.CalculateWeightedAverage(pArr, duration)
+		pArr, err := c.FilterPeriodsByLowestIntensity(data, duration)
+		if err != nil {
+			return nil, fmt.Errorf("error calculating lowest intesity: %v", err)
+		}
+		s, err := c.CalculateWeightedAverage(pArr, duration)
 		if err != nil {
 			return nil, fmt.Errorf("error calculating weighted average: %v", err)
 		}
+		slots = append(slots, s...)
 	}
 
 	return slots, nil

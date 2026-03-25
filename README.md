@@ -13,7 +13,6 @@ If you want to try out the application, head to [Getting Started](#getting-start
 3. [Getting started](#getting-started)
 4. [Concsessions & assumptions](#concessions--assumptions-made)
 
-
 ### API Documentation
 
 #### Slots API endpoints
@@ -22,7 +21,7 @@ If you want to try out the application, head to [Getting Started](#getting-start
 
 ## About the Project
 
-This application fetches the time slots with the lowest carbon intensity over a provided period. 
+This application fetches the time slots with the lowest carbon intensity over a specified period. 
 
 It will either:
 
@@ -31,7 +30,7 @@ It will either:
 
 ### Project Structure and Extras
 
-<!-- The `main.go` file lives in the `cmd/` directory. This is the main application directory and the entrypoint for the application. -->
+The `main.go` file lives in the `cmd/` directory. This is the main application directory and the entrypoint for the application.
 
 Nearly everything else lives in the `internal/` directory.
 

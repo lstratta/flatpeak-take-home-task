@@ -22,6 +22,8 @@ func NewCalculationService() *CalculationService {
 	return &CalculationService{}
 }
 
+// FilterPeriodsByLowestIntensity accepts a slice of models.Period and a time.Duration variable, and returns
+// []models.Period, or an error. It will filter the lowest intesity time periods.
 func (c *CalculationService) FilterPeriodsByLowestIntensity(pArr []models.Period, dur time.Duration) ([]models.Period, error) {
 	var lowPeriods []models.Period
 
@@ -50,6 +52,9 @@ func (c *CalculationService) FilterPeriodsByLowestIntensity(pArr []models.Period
 	return lowPeriods, nil
 }
 
+// FilterPeriodsByDuration accepts a slice of models.Period and a time.Duration variable, and returns
+// []models.Period, or an error. It will filter the number of periods that fit within the specified
+// duration.
 func (c *CalculationService) FilterPeriodsByDuration(pArr []models.Period, duration time.Duration) ([]models.Period, error) {
 	var selectedPeriods []models.Period
 
@@ -75,6 +80,8 @@ func (c *CalculationService) FilterPeriodsByDuration(pArr []models.Period, durat
 	return selectedPeriods, nil
 }
 
+// CalculateWeightedAverage accepts a slice of models.Period and a time.Duration variable, and returns
+// []models.Slot, or an error. It will calculate the last weighted average of the last element in the slice.
 func (c *CalculationService) CalculateWeightedAverage(pArr []models.Period, duration time.Duration) ([]models.Slot, error) {
 	s := []models.Slot{}
 
@@ -119,6 +126,9 @@ func (c *CalculationService) CalculateWeightedAverage(pArr []models.Period, dura
 	return s, nil
 }
 
+// CalculateContinuousPeriodIntensity accepts a slice of models.Period and a time.Duration variable, and returns
+// a pointer to models.Slot, or an error. It will calculate the average of all elements in the slice, taking into
+// account partial time periods.
 func (c *CalculationService) CalculateContinuousPeriodIntensity(pArr []models.Period, duration time.Duration) (*models.Slot, error) {
 	weight := 0.0
 	totalIntensity := 0.0

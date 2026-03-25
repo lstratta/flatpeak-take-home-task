@@ -25,6 +25,7 @@ type interval struct {
 	Intensity models.Intensity `json:"intensity"`
 }
 
+// Fetch data from NESO API
 func GetNesoData() (*models.Data, error) {
 	from := time.Now().Format(time.RFC3339) // RFC3339 = "2006-01-02T15:04:05Z07:00"
 	url := fmt.Sprintf("%s/%s/%s/%s", NESO_API, NESO_INTENSITY_PATH, from, NESO_FW24H)

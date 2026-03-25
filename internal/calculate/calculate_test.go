@@ -102,7 +102,7 @@ func Test_CalculateWeightedAverageForLastPeriodInSlice_ReturnsCorrectIntensity(t
 			t.Errorf("error FilterPeriodsByLowestIntensity: %v", err)
 		}
 
-		slots, err := CalculateWeightedAverageForTimePeriodByDuration(pArr, dur)
+		slots, err := CalculateWeightedAverage(pArr, dur)
 		if err != nil {
 			t.Errorf("error calculating continuous period: %v", err)
 		}

@@ -4,28 +4,39 @@ import (
 	"fmt"
 	"math"
 	"sort"
+	"strconv"
 	"time"
 
 	"github.com/lstratta/flatpeak-take-home-task/internal/models"
 )
 
 const (
-	fixedTimePeriod time.Duration = 30
+	// The length of the time periods provided by NESO (30 minute intervals)
+	fixedTimePeriod time.Duration = 1_800_000_000_000 // nanoseconds
 )
 
-func FilterPeriodsByLowestIntensity(pArr []models.Period, duration time.Duration) ([]models.Period, error) {
+func FilterPeriodsByLowestIntensity(pArr []models.Period, dur time.Duration) ([]models.Period, error) {
 	var lowPeriods []models.Period
+
+	timeSpan := int64(math.Ceil(dur.Minutes() / fixedTimePeriod.Minutes()))
+	timeSpanCount := int64(0)
+
 	count := len(pArr)
 	for count > 0 {
-		minItensityIndex := 0
+		minIntensityIndex := 0
 		for i := 1; i < count; i++ {
-			if pArr[i].Intensity.Forecast < pArr[minItensityIndex].Intensity.Forecast {
-				minItensityIndex = i
+			if pArr[i].Intensity.Forecast < pArr[minIntensityIndex].Intensity.Forecast {
+				minIntensityIndex = i
 			}
 		}
 
-		lowPeriods = append(lowPeriods, pArr[minItensityIndex])
+		lowPeriods = append(lowPeriods, pArr[minIntensityIndex])
+		pArr = append(pArr[:minIntensityIndex], pArr[minIntensityIndex+1:]...)
 		count--
+		timeSpanCount++
+		if timeSpanCount >= timeSpan {
+			break
+		}
 	}
 
 	sort.Sort(models.ByDateSorter(lowPeriods))
@@ -48,7 +59,7 @@ func FilterPeriodsByDuration(pArr []models.Period, duration time.Duration) ([]mo
 	}
 
 	// Capture the period any duration over 30 mins overflows into
-	timeRemainder := int(duration.Minutes()) % int(fixedTimePeriod)
+	timeRemainder := int(duration.Minutes()) % int(fixedTimePeriod.Minutes())
 	if timeRemainder > 0 {
 		l := len(selectedPeriods)
 		selectedPeriods = append(selectedPeriods, pArr[l])
@@ -56,7 +67,7 @@ func FilterPeriodsByDuration(pArr []models.Period, duration time.Duration) ([]mo
 	return selectedPeriods, nil
 }
 
-func CalculateWeightedAverageForTimePeriodByDuration(pArr []models.Period, duration time.Duration) ([]models.Slot, error) {
+func CalculateWeightedAverage(pArr []models.Period, duration time.Duration) ([]models.Slot, error) {
 	s := []models.Slot{}
 
 	for _, p := range pArr {
@@ -71,9 +82,10 @@ func CalculateWeightedAverageForTimePeriodByDuration(pArr []models.Period, durat
 		s = append(s, entry)
 	}
 
-	fixedTimePeriodInt64 := int64(fixedTimePeriod)
+	fixedTimePeriodInt64 := int64(fixedTimePeriod.Minutes())
 	durationInt64 := int64(duration.Minutes())
 
+	// return if there is no partial time
 	timeRemainder := durationInt64 % fixedTimePeriodInt64
 	if timeRemainder == 0 {
 		return s, nil
@@ -85,9 +97,16 @@ func CalculateWeightedAverageForTimePeriodByDuration(pArr []models.Period, durat
 		return nil, fmt.Errorf("slice length too short")
 	}
 
+	// calculate weight of last element
 	i := float64(s[l-1].Carbon.Intensity) * weight
-
 	s[l-1].Carbon.Intensity = int64(math.Round(i))
+	timeRemainderDuration, err := time.ParseDuration(fmt.Sprint(strconv.Itoa(int(timeRemainder)), "m"))
+	if err != nil {
+		return nil, fmt.Errorf("error parsing duration: %v", err)
+	}
+
+	// update entry.ValidTo with correct duraion from the start of the last element
+	s[l-1].ValidTo = s[l-1].ValidFrom.Add(timeRemainderDuration)
 	return s, nil
 }
 
@@ -99,7 +118,7 @@ func CalculateContinuousPeriodIntensity(pArr []models.Period, duration time.Dura
 	if l < 1 {
 		return nil, fmt.Errorf("array length 0")
 	}
-	timeRemainder := int(duration.Minutes()) % int(fixedTimePeriod)
+	timeRemainder := int(duration.Minutes()) % int(fixedTimePeriod.Minutes())
 	if timeRemainder > 0 {
 		weight = float64(timeRemainder) / float64(fixedTimePeriod)
 		totalIntensity = float64(pArr[l-1].Intensity.Forecast) * weight

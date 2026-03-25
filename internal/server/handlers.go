@@ -19,10 +19,14 @@ func (s *serveMux) slotsHandler() http.Handler {
 		durParam := q["duration"]
 		isContinuousParam := q["continuous"]
 
+		// if durParam is empty, use 30 default value
 		if len(durParam) < 1 || len(isContinuousParam) < 1 {
-			w.WriteHeader(http.StatusInternalServerError)
-			log.Println("missing url parameter")
-			return
+			durParam = []string{"30"}
+		}
+
+		// if isContinuousParam is empty, use false default value
+		if len(isContinuousParam) < 1 {
+			isContinuousParam = []string{"false"}
 		}
 
 		dur := durParam[0]
@@ -60,20 +64,21 @@ func (s *serveMux) slotsHandler() http.Handler {
 		var slots []models.Slot
 
 		if isContinuous {
-			fArr, err := calculate.FilterPeriodsByDuration(pArr, duration)
-			if err != nil {
-				w.WriteHeader(http.StatusInternalServerError)
-				log.Printf("error calculating FilterPeriodsByDuration: %v", err)
-				return
-			}
-
-			slot, err := calculate.CalculateContinuousPeriodIntensity(fArr, duration)
+			slot, err := calculate.CalculateContinuousPeriodIntensity(pArr, duration)
 			if err != nil {
 				w.WriteHeader(http.StatusInternalServerError)
 				log.Printf("error calculating continuous period by duration: %v", err)
 				return
 			}
 			slots = append(slots, *slot)
+		} else {
+			slots, err = calculate.CalculateWeightedAverage(pArr, duration)
+			if err != nil {
+				w.WriteHeader(http.StatusInternalServerError)
+				log.Printf("error calculating weighted average: %v", err)
+				return
+			}
+
 		}
 
 		b, err := json.Marshal(&slots)

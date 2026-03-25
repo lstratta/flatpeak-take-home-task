@@ -7,7 +7,7 @@ test: cleanup
 
 # build the binary after testing the code
 build: test
-	@go build -o main cmd/main.go
+	@go build -o tmp/main cmd/main.go
 .PHONY: build
 
 # simply starts the database containers and the development server 

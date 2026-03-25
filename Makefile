@@ -31,6 +31,6 @@ cleanup:
 docker-build: test
 	@docker build . -t flatpeak/carbon-intensity:latest
 
-docker-run:
+docker-run: docker-build
 	@docker compose -f docker/compose.yaml up -d 
 .PHONY: docker-run

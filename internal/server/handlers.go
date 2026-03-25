@@ -19,7 +19,6 @@ func (s *serveMux) slotsHandler() http.Handler {
 
 		durParam := q["duration"]
 		isContinuousParam := q["continuous"]
-		fmt.Println("len of isContinuousParam: ", len(isContinuousParam))
 
 		// if durParam is empty, use 30 default value
 		if len(durParam) < 1 {
@@ -30,8 +29,6 @@ func (s *serveMux) slotsHandler() http.Handler {
 		if len(isContinuousParam) < 1 {
 			isContinuousParam = []string{"false"}
 		}
-
-		fmt.Println(isContinuousParam)
 
 		dur := durParam[0]
 		isContinuousString := isContinuousParam[0]

@@ -155,8 +155,8 @@ func Test_CalculateContinuousPeriod_ReturnsCorrectAverageIntensity(t *testing.T)
 			t.Errorf("error calculating continuous period: %v", err)
 		}
 
-		if actual != tab.target {
-			t.Errorf("averaged intensity - expected: %d, actual: %d", tab.target, actual)
+		if actual.Carbon.Intensity != tab.target {
+			t.Errorf("averaged intensity - expected: %d, actual: %d", tab.target, actual.Carbon.Intensity)
 		}
 	}
 }

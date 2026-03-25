@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/lstratta/flatpeak-take-home-task/internal/calculate"
+	"github.com/lstratta/flatpeak-take-home-task/internal/models"
 	"github.com/lstratta/flatpeak-take-home-task/internal/neso"
 )
 
@@ -51,7 +52,7 @@ func (s *serveMux) slotsHandler() http.Handler {
 			log.Println(err)
 		}
 
-		var slot calculate.Slot
+		var slot *models.Slot
 
 		if isContinuous {
 			fArr, err := calculate.FilterPeriodsByDuration(pArr, duration)
@@ -66,7 +67,7 @@ func (s *serveMux) slotsHandler() http.Handler {
 			}
 		}
 
-		b, err := json.Marshal(slot)
+		b, err := json.Marshal(&slot)
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			log.Println(err)

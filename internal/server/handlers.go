@@ -30,7 +30,7 @@ func (s *serveMux) slotsHandler() http.Handler {
 		durInMinutes := durStr + "m"
 		duration, err := time.ParseDuration(durInMinutes)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			w.WriteHeader(http.StatusBadRequest)
 			log.Println("error parsing duration: ", err)
 			return
 		}

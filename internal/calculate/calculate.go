@@ -153,7 +153,7 @@ func (c *CalculationService) CalculateContinuousPeriodIntensity(pArr []models.Pe
 	averageIntensity := totalIntensity / (float64(l) - 1 + weight)
 
 	intensity := int64(math.Round(averageIntensity))
-	timeRemainderDuration, err := time.ParseDuration(fmt.Sprint(strconv.Itoa(int(timeRemainder)), "m"))
+	timeRemainderDuration, err := time.ParseDuration(fmt.Sprint(strconv.Itoa(int(fixedTimePeriod.Minutes())-timeRemainder), "m"))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing duration: %v", err)
 	}

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/lstratta/flatpeak-take-home-task/internal/neso"
+	"github.com/lstratta/flatpeak-take-home-task/internal/models"
 )
 
 func Test_FilterPeriodsByLowestInensity_ReturnSlots(t *testing.T) {
@@ -161,13 +161,13 @@ func Test_CalculateContinuousPeriod_ReturnsCorrectAverageIntensity(t *testing.T)
 	}
 }
 
-func genData() *neso.Data {
-	return &neso.Data{
-		Data: []neso.Period{
+func genData() *models.Data {
+	return &models.Data{
+		Data: []models.Period{
 			{
 				From: time.Date(2026, time.Month(3), 24, 10, 30, 00, 00, time.Now().UTC().Location()),
 				To:   time.Date(2026, time.Month(3), 24, 11, 00, 00, 00, time.Now().UTC().Location()),
-				Intensity: neso.Intensity{
+				Intensity: models.Intensity{
 					Forecast: 56,
 					Actual:   0,
 					Index:    "low",
@@ -176,7 +176,7 @@ func genData() *neso.Data {
 			{
 				From: time.Date(2026, time.Month(3), 24, 11, 00, 00, 00, time.Now().UTC().Location()),
 				To:   time.Date(2026, time.Month(3), 24, 11, 30, 00, 00, time.Now().UTC().Location()),
-				Intensity: neso.Intensity{
+				Intensity: models.Intensity{
 					Forecast: 97,
 					Actual:   0,
 					Index:    "low",
@@ -185,7 +185,7 @@ func genData() *neso.Data {
 			{
 				From: time.Date(2026, time.Month(3), 24, 11, 30, 00, 00, time.Now().UTC().Location()),
 				To:   time.Date(2026, time.Month(3), 24, 12, 00, 00, 00, time.Now().UTC().Location()),
-				Intensity: neso.Intensity{
+				Intensity: models.Intensity{
 					Forecast: 13,
 					Actual:   0,
 					Index:    "very low",
@@ -194,7 +194,7 @@ func genData() *neso.Data {
 			{
 				From: time.Date(2026, time.Month(3), 24, 12, 00, 00, 00, time.Now().UTC().Location()),
 				To:   time.Date(2026, time.Month(3), 24, 12, 30, 00, 00, time.Now().UTC().Location()),
-				Intensity: neso.Intensity{
+				Intensity: models.Intensity{
 					Forecast: 170,
 					Actual:   0,
 					Index:    "high",
@@ -203,7 +203,7 @@ func genData() *neso.Data {
 			{
 				From: time.Date(2026, time.Month(3), 24, 12, 30, 00, 00, time.Now().UTC().Location()),
 				To:   time.Date(2026, time.Month(3), 24, 13, 00, 00, 00, time.Now().UTC().Location()),
-				Intensity: neso.Intensity{
+				Intensity: models.Intensity{
 					Forecast: 83,
 					Actual:   0,
 					Index:    "low",
@@ -212,7 +212,7 @@ func genData() *neso.Data {
 			{
 				From: time.Date(2026, time.Month(3), 24, 13, 00, 00, 00, time.Now().UTC().Location()),
 				To:   time.Date(2026, time.Month(3), 24, 13, 30, 00, 00, time.Now().UTC().Location()),
-				Intensity: neso.Intensity{
+				Intensity: models.Intensity{
 					Forecast: 130,
 					Actual:   0,
 					Index:    "moderate",
@@ -221,7 +221,7 @@ func genData() *neso.Data {
 			{
 				From: time.Date(2026, time.Month(3), 24, 13, 30, 00, 00, time.Now().UTC().Location()),
 				To:   time.Date(2026, time.Month(3), 24, 14, 00, 00, 00, time.Now().UTC().Location()),
-				Intensity: neso.Intensity{
+				Intensity: models.Intensity{
 					Forecast: 83,
 					Actual:   0,
 					Index:    "low",
@@ -230,7 +230,7 @@ func genData() *neso.Data {
 			{
 				From: time.Date(2026, time.Month(3), 24, 14, 00, 00, 00, time.Now().UTC().Location()),
 				To:   time.Date(2026, time.Month(3), 24, 14, 30, 00, 00, time.Now().UTC().Location()),
-				Intensity: neso.Intensity{
+				Intensity: models.Intensity{
 					Forecast: 385,
 					Actual:   0,
 					Index:    "high",
@@ -239,7 +239,7 @@ func genData() *neso.Data {
 			{
 				From: time.Date(2026, time.Month(3), 24, 14, 30, 00, 00, time.Now().UTC().Location()),
 				To:   time.Date(2026, time.Month(3), 24, 15, 00, 00, 00, time.Now().UTC().Location()),
-				Intensity: neso.Intensity{
+				Intensity: models.Intensity{
 					Forecast: 138,
 					Actual:   0,
 					Index:    "moderate",
@@ -248,7 +248,7 @@ func genData() *neso.Data {
 			{
 				From: time.Date(2026, time.Month(3), 24, 15, 00, 00, 00, time.Now().UTC().Location()),
 				To:   time.Date(2026, time.Month(3), 24, 15, 30, 00, 00, time.Now().UTC().Location()),
-				Intensity: neso.Intensity{
+				Intensity: models.Intensity{
 					Forecast: 1,
 					Actual:   0,
 					Index:    "very low",
@@ -257,7 +257,7 @@ func genData() *neso.Data {
 			{
 				From: time.Date(2026, time.Month(3), 24, 15, 30, 00, 00, time.Now().UTC().Location()),
 				To:   time.Date(2026, time.Month(3), 24, 16, 00, 00, 00, time.Now().UTC().Location()),
-				Intensity: neso.Intensity{
+				Intensity: models.Intensity{
 					Forecast: 18,
 					Actual:   0,
 					Index:    "very low",
@@ -266,7 +266,7 @@ func genData() *neso.Data {
 			{
 				From: time.Date(2026, time.Month(3), 24, 16, 00, 00, 00, time.Now().UTC().Location()),
 				To:   time.Date(2026, time.Month(3), 24, 16, 30, 00, 00, time.Now().UTC().Location()),
-				Intensity: neso.Intensity{
+				Intensity: models.Intensity{
 					Forecast: 101,
 					Actual:   0,
 					Index:    "moderate",

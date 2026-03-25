@@ -6,18 +6,8 @@ import (
 	"sort"
 	"time"
 
-	"github.com/lstratta/flatpeak-take-home-task/internal/neso"
+	"github.com/lstratta/flatpeak-take-home-task/internal/models"
 )
-
-type Slot struct {
-	ValidFrom time.Time `json:"valid_from"`
-	ValidTo   time.Time `json:"valid_to"`
-	Carbon    Carbon    `json:"carbon"`
-}
-
-type Carbon struct {
-	Intensity int64 `json:"intensity"`
-}
 
 type index string
 
@@ -29,8 +19,8 @@ const (
 	fixedTimePeriod time.Duration = 30
 )
 
-func FilterPeriodsByLowestIntensity(pArr []neso.Period, duration time.Duration) ([]neso.Period, error) {
-	var lowPeriods []neso.Period
+func FilterPeriodsByLowestIntensity(pArr []models.Period, duration time.Duration) ([]models.Period, error) {
+	var lowPeriods []models.Period
 	timeSpan := int(math.Ceil(float64(duration.Minutes()) / float64(fixedTimePeriod)))
 	indexes := []index{veryLowIndex, lowIndex, moderateIndex, highIndex}
 
@@ -53,12 +43,12 @@ func FilterPeriodsByLowestIntensity(pArr []neso.Period, duration time.Duration) 
 		}
 	}
 
-	sort.Sort(neso.ByDateSorter(lowPeriods))
+	sort.Sort(models.ByDateSorter(lowPeriods))
 	return lowPeriods, nil
 }
 
-func FilterPeriodsByDuration(pArr []neso.Period, duration time.Duration) ([]neso.Period, error) {
-	var selectedPeriods []neso.Period
+func FilterPeriodsByDuration(pArr []models.Period, duration time.Duration) ([]models.Period, error) {
+	var selectedPeriods []models.Period
 
 	startTime := pArr[0].From
 
@@ -81,15 +71,15 @@ func FilterPeriodsByDuration(pArr []neso.Period, duration time.Duration) ([]neso
 	return selectedPeriods, nil
 }
 
-func CalculateWeightedAverageForTimePeriodByDuration(pArr []neso.Period, duration time.Duration) ([]Slot, error) {
-	s := []Slot{}
+func CalculateWeightedAverageForTimePeriodByDuration(pArr []models.Period, duration time.Duration) ([]models.Slot, error) {
+	s := []models.Slot{}
 
 	for _, p := range pArr {
 
-		entry := Slot{
+		entry := models.Slot{
 			ValidFrom: p.From,
 			ValidTo:   p.To,
-			Carbon: Carbon{
+			Carbon: models.Carbon{
 				Intensity: p.Intensity.Forecast,
 			},
 		}
@@ -116,7 +106,7 @@ func CalculateWeightedAverageForTimePeriodByDuration(pArr []neso.Period, duratio
 	return s, nil
 }
 
-func CalculateContinuousPeriodIntensity(pArr []neso.Period, duration time.Duration) (int64, error) {
+func CalculateContinuousPeriodIntensity(pArr []models.Period, duration time.Duration) (*models.Slot, error) {
 	weight := 0.0
 	totalIntensity := 0.0
 	l := len(pArr)
@@ -141,7 +131,17 @@ func CalculateContinuousPeriodIntensity(pArr []neso.Period, duration time.Durati
 
 	averageIntensity := totalIntensity / (float64(l) - 1 + weight)
 
-	return int64(math.Round(averageIntensity)), nil
+	intensity := int64(math.Round(averageIntensity))
+
+	s := &models.Slot{
+		ValidFrom: pArr[0].From,
+		ValidTo:   pArr[len(pArr)-1].To,
+		Carbon: models.Carbon{
+			Intensity: intensity,
+		},
+	}
+
+	return s, nil
 }
 
 // func hold() {

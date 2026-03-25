@@ -5,29 +5,9 @@ import (
 	"fmt"
 	"net/http"
 	"time"
+
+	"github.com/lstratta/flatpeak-take-home-task/internal/models"
 )
-
-type Data struct {
-	Data []Period `json:"data"`
-}
-
-type Period struct {
-	From      time.Time `json:"from"`
-	To        time.Time `json:"to"`
-	Intensity Intensity `json:"intensity"`
-}
-
-type Intensity struct {
-	Forecast int64  `json:"forecast"`
-	Actual   int64  `json:"actual"`
-	Index    string `json:"index"`
-}
-
-type ByDateSorter []Period
-
-func (b ByDateSorter) Len() int           { return len(b) }
-func (b ByDateSorter) Swap(i, j int)      { b[i], b[j] = b[j], b[i] }
-func (b ByDateSorter) Less(i, j int) bool { return b[i].From.Before(b[j].From) }
 
 const (
 	NESO_API            string = "https://api.carbonintensity.org.uk"
@@ -35,7 +15,17 @@ const (
 	NESO_FW24H          string = "fw24h"
 )
 
-func GetNesoData() (*Data, error) {
+type response struct {
+	Data []interval
+}
+
+type interval struct {
+	From      string           `json:"from"`
+	To        string           `json:"to"`
+	Intensity models.Intensity `json:"intensity"`
+}
+
+func GetNesoData() (*models.Data, error) {
 	from := time.Now().Format(time.RFC3339) // RFC3339 = "2006-01-02T15:04:05Z07:00"
 	url := fmt.Sprintf("%s/%s/%s/%s", NESO_API, NESO_INTENSITY_PATH, from, NESO_FW24H)
 	fmt.Println(url)
@@ -53,12 +43,35 @@ func GetNesoData() (*Data, error) {
 	return d, nil
 }
 
-func convertResToData(res *http.Response) (*Data, error) {
-	d := Data{}
+func convertResToData(res *http.Response) (*models.Data, error) {
+	r := response{}
 
-	if err := json.NewDecoder(res.Body).Decode(&d); err != nil {
+	if err := json.NewDecoder(res.Body).Decode(&r); err != nil {
 		return nil, fmt.Errorf("error decoding json data: %v", err)
 	}
+
+	for i := range r.Data {
+		newDateFormat := r.Data[i].From[:len(r.Data[i].From)-1] // remove the Z
+		newDateFormat = newDateFormat + ":00Z"                  // add in the missing seconds
+		r.Data[i].From = newDateFormat
+
+		newDateFormat = r.Data[i].To[:len(r.Data[i].To)-1] // remove the Z
+		newDateFormat = newDateFormat + ":00Z"             // add in the missing seconds
+		r.Data[i].To = newDateFormat
+	}
+
+	fmt.Printf("%v", r)
+	data, err := json.Marshal(r)
+	if err != nil {
+		return nil, fmt.Errorf("error marshalling data: %v", err)
+	}
+
+	d := models.Data{}
+	err = json.Unmarshal(data, &d)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling data: %v", err)
+	}
+
 	return &d, nil
 }
 

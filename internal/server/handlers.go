@@ -36,7 +36,6 @@ func (s *serveMux) slotsHandler() http.Handler {
 			return
 		}
 
-		// fetch data from NESO
 		d, err := neso.GetNesoData()
 		if err != nil {
 			w.WriteHeader(http.StatusInternalServerError)

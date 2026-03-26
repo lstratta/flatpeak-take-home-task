@@ -130,16 +130,16 @@ Here are some example test commands:
 
 ```bash
 # defaults to duration=30 and continuous = false
-curl --H 'application/json' --url "http://localhost:7777/slots"
+curl --H 'application/json' --url "http://localhost:3000/slots"
 
-curl --H 'application/json' --url "http://localhost:7777/slots?duration=30&continuous=true"
+curl --H 'application/json' --url "http://localhost:3000/slots?duration=30&continuous=true"
 
 # returns 400 Bad Request
-curl --H 'application/json' --url "http://localhost:7777/slots?duration=1500&continuous=true" 
-curl --H 'application/json' --url "http://localhost:7777/slots?duration=-1&continuous=true" 
+curl --H 'application/json' --url "http://localhost:3000/slots?duration=1500&continuous=true" 
+curl --H 'application/json' --url "http://localhost:3000/slots?duration=-1&continuous=true" 
 
 # defaults to duration=30 and continuous = false
-curl --H 'application/json' --url "http://localhost:7777/slots?duration=0" 
+curl --H 'application/json' --url "http://localhost:3000/slots?duration=0" 
 
 ```
 

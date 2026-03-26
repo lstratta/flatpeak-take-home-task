@@ -11,7 +11,7 @@ If you want to try out the application, head to [Getting Started](#getting-start
 1. [About the project](#about-the-project)
 2. [Project structure and extras](#project-structure-and-extras)
 3. [Getting started](#getting-started-1)
-4. [Concsessions & assumptions](#concessions--assumptions-made)
+4. [Concessions & assumptions](#concessions--assumptions-made)
 
 ### API Documentation
 
@@ -52,7 +52,7 @@ You must have the following installed:
 - Go@v1.26.1 (minimum)
 - Docker (or alternative, using the `docker` alias so the Makefile can be used if you use something like Podman or Colima)
 
-### Project Dependenices
+### Project Dependencies
 
 There are no required project dependencies to download as everything was created using the standard Go library. 
 
@@ -102,11 +102,12 @@ make test
 I had to make a couple of assumptions:
 
 1. Only the lowest out of the entire 24 hour period should be returned, even if they are not adjacent.
-2. When asking specifiying `continuous=true` there should be no gap between the time periods processed. 
+2. When specifying `continuous=true`, there should be no gap between the time periods processed. 
+3. When specifying `continuous=true`, data starts from the time of the request.
 
 I have listed a few of the things I would do if I had more time:
 
-1. The averaging functions are a little messy and I would refactor these to be able to try and utilise the same averaging functions across multliple calculations. 
+1. The averaging functions are a little messy and I would refactor these to be able to try and utilise the same averaging functions across multiple calculations. 
 2. I only added a logging middleware, so adding extra middleware would be required
 3. There are many more tests that I could write but I wanted to add some simple ones to validate the calculate functions
 4. There are a couple of situations I could extract code from functions to make it less tightly coupled

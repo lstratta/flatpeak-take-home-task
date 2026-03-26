@@ -109,7 +109,6 @@ func validateSlotsQueryParams(q url.Values) (dur string, isContinuous string) {
 }
 
 func calculations(d *models.Data, duration time.Duration, isContinuous bool) ([]models.Slot, error) {
-	fmt.Println("handlers duration: ", duration)
 	c := calculate.NewCalculationService()
 	slots := []models.Slot{}
 

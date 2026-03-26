@@ -108,9 +108,9 @@ I had to make a couple of assumptions:
 I have listed a few of the things I would do if I had more time:
 
 1. The averaging functions are a little messy and I would refactor these to be able to try and utilise the same averaging functions across multiple calculations. 
-2. I only added a logging middleware, so adding extra middleware would be required
-3. There are many more tests that I could write but I wanted to add some simple ones to validate the calculate functions
-4. There are a couple of situations I could extract code from functions to make it less tightly coupled
+2. I only added a logging middleware, so adding extra middleware would be required.
+3. There are many more tests that I could write but I wanted to add some simple ones to validate the calculate functions.
+4. There are a couple of situations I could extract code from functions to make it less tightly coupled.
 
 
 ### GET /slots
@@ -122,7 +122,7 @@ duration (number): 1 <= x <= 1440: default = 30
 continuous (bool): true|false: default = false
 ```
 
-The `/slots` endpoint defaults to a `duration=30` and `continuous=30` 
+The `/slots` endpoint defaults to a `duration=30` and `continuous=false` 
 
 Here are some example test commands:
 

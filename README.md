@@ -25,8 +25,8 @@ This application fetches the time slots with the lowest carbon intensity over a 
 
 It will either:
 
-1. Provide the time slots as individual time periods that are the lowest out of the time period provided. Time slots returned aren't necessarily adjacent to each other.
-2. Provide one time slot that shows the average over the specified time period, with weighting based on how long you have specified.
+1. Provide the time slots as individual time periods that are the lowest out of the time period provided. Time slots returned aren't necessarily adjacent to each other in order.
+2. Provide one time slot that shows the average over the specified time period, with weighting based on how long you have specified. The time slot returned is from the time you initiated the request.
 
 ### Project Structure and Extras
 

@@ -110,10 +110,15 @@ func validateSlotsQueryParams(q url.Values) (dur string, isContinuous string) {
 }
 
 func calculations(d *models.Data, duration time.Duration, isContinuous bool) ([]models.Slot, error) {
+	fmt.Println("handlers duration: ", duration)
 	c := calculate.NewCalculationService()
 	slots := []models.Slot{}
 
 	data := d.Data
+
+	// timeRemainder is used to calcultate if there is a partial overlap into
+	// the next time period
+	timeRemainder := int64(duration.Minutes()) % int64(calculate.FixedTimePeriod.Minutes())
 
 	// if isContinuous == true, find the average for all periods and return as one period
 	// else, return all the number of lowest periods over the next 24 hours that fit
@@ -124,19 +129,27 @@ func calculations(d *models.Data, duration time.Duration, isContinuous bool) ([]
 			return nil, fmt.Errorf("error filtering periods by duration: %v", err)
 		}
 
-		slot, err := c.CalculateContinuousPeriodIntensity(p, duration)
-		if err != nil {
-			return nil, fmt.Errorf("error calculating continuous period by duration: %v", err)
+		if timeRemainder <= 0 {
+			slot, err := c.CalculateWholeContinuousPeriodIntensity(p)
+			if err != nil {
+				return nil, fmt.Errorf("error calculating continuous period by duration: %v", err)
+			}
+			slots = append(slots, *slot)
+		} else {
+			slot, err := c.CalculatePartialContinuousPeriodIntensity(p, duration, timeRemainder)
+			if err != nil {
+				return nil, fmt.Errorf("error calculating continuous intensity with overlap: %v", err)
+			}
+			slots = append(slots, *slot)
 		}
-
-		slots = append(slots, *slot)
 
 	} else {
 		pArr, err := c.FilterPeriodsByLowestIntensity(data, duration)
 		if err != nil {
 			return nil, fmt.Errorf("error calculating lowest intesity: %v", err)
 		}
-		s, err := c.CalculateWeightedAverage(pArr, duration)
+
+		s, err := c.CalculateWeightedAverage(pArr, duration, timeRemainder)
 		if err != nil {
 			return nil, fmt.Errorf("error calculating weighted average: %v", err)
 		}

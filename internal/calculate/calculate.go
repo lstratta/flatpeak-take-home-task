@@ -12,7 +12,7 @@ import (
 
 const (
 	// The length of the time periods provided by NESO (30 minute intervals)
-	fixedTimePeriod time.Duration = 1_800_000_000_000 // nanoseconds
+	FixedTimePeriod time.Duration = 1_800_000_000_000 // nanoseconds
 )
 
 type CalculationService struct {
@@ -27,7 +27,7 @@ func NewCalculationService() *CalculationService {
 func (c *CalculationService) FilterPeriodsByLowestIntensity(pArr []models.Period, dur time.Duration) ([]models.Period, error) {
 	var lowPeriods []models.Period
 
-	timeSpan := int64(math.Ceil(dur.Minutes() / fixedTimePeriod.Minutes()))
+	timeSpan := int64(math.Ceil(dur.Minutes() / FixedTimePeriod.Minutes()))
 	timeSpanCount := int64(0)
 
 	count := len(pArr)
@@ -71,7 +71,7 @@ func (c *CalculationService) FilterPeriodsByDuration(pArr []models.Period, durat
 	}
 
 	// Capture the period any duration over 30 mins overflows into
-	timeRemainder := int(duration.Minutes()) % int(fixedTimePeriod.Minutes())
+	timeRemainder := int(duration.Minutes()) % int(FixedTimePeriod.Minutes())
 	if timeRemainder > 0 {
 		l := len(selectedPeriods)
 		selectedPeriods = append(selectedPeriods, pArr[l])
@@ -82,7 +82,7 @@ func (c *CalculationService) FilterPeriodsByDuration(pArr []models.Period, durat
 
 // CalculateWeightedAverage accepts a slice of models.Period and a time.Duration variable, and returns
 // []models.Slot, or an error. It will calculate the last weighted average of the last element in the slice.
-func (c *CalculationService) CalculateWeightedAverage(pArr []models.Period, duration time.Duration) ([]models.Slot, error) {
+func (c *CalculationService) CalculateWeightedAverage(pArr []models.Period, duration time.Duration, timeRemainder int64) ([]models.Slot, error) {
 	s := []models.Slot{}
 
 	for _, p := range pArr {
@@ -97,16 +97,11 @@ func (c *CalculationService) CalculateWeightedAverage(pArr []models.Period, dura
 		s = append(s, entry)
 	}
 
-	fixedTimePeriodInt64 := int64(fixedTimePeriod.Minutes())
-	durationInt64 := int64(duration.Minutes())
-
-	// return if there is no partial time
-	timeRemainder := durationInt64 % fixedTimePeriodInt64
 	if timeRemainder == 0 {
 		return s, nil
 	}
 
-	weight := float64(timeRemainder) / float64(fixedTimePeriodInt64)
+	weight := float64(timeRemainder) / FixedTimePeriod.Minutes()
 	l := len(s)
 	if l < 1 {
 		return nil, fmt.Errorf("slice length too short")
@@ -126,11 +121,10 @@ func (c *CalculationService) CalculateWeightedAverage(pArr []models.Period, dura
 	return s, nil
 }
 
-// CalculateContinuousPeriodIntensity accepts a slice of models.Period and a time.Duration variable, and returns
-// a pointer to models.Slot, or an error. It will calculate the average of all elements in the slice, taking into
-// account partial time periods.
-func (c *CalculationService) CalculateContinuousPeriodIntensity(pArr []models.Period, duration time.Duration) (*models.Slot, error) {
-	weight := 0.0
+// CalculateContinuousPeriodIntensity accepts a slice of models.Period and a time.Duration
+// variable, and returns a pointer to models.Slot, or an error.
+// It will calculate the average of all elements in the slice.
+func (c *CalculationService) CalculateWholeContinuousPeriodIntensity(pArr []models.Period) (*models.Slot, error) {
 	totalIntensity := 0.0
 
 	arrLength := len(pArr)
@@ -140,33 +134,40 @@ func (c *CalculationService) CalculateContinuousPeriodIntensity(pArr []models.Pe
 
 	lastElem := pArr[arrLength-1]
 
-	timeRemainder := int(duration.Minutes()) % int(fixedTimePeriod.Minutes())
-	if timeRemainder <= 0 {
-		weight = 1.0
-
-		for _, p := range pArr {
-			totalIntensity += float64(p.Intensity.Forecast)
-		}
-
-		averageIntensity := totalIntensity / (float64(arrLength) - 1 + weight)
-
-		intensity := int64(math.Round(averageIntensity))
-		s := &models.Slot{
-			ValidFrom: pArr[0].From,
-			ValidTo:   lastElem.To,
-			Carbon: models.Carbon{
-				Intensity: intensity,
-			},
-		}
-
-		return s, nil
-
+	for _, p := range pArr {
+		totalIntensity += float64(p.Intensity.Forecast)
 	}
 
-	// handle durations that are not multiples of 30
-	// e.g. 13, 45, 61
-	weight = float64(timeRemainder) / float64(fixedTimePeriod.Minutes())
+	averageIntensity := totalIntensity / float64(arrLength)
 
+	intensity := int64(math.Round(averageIntensity))
+	s := &models.Slot{
+		ValidFrom: pArr[0].From,
+		ValidTo:   lastElem.To,
+		Carbon: models.Carbon{
+			Intensity: intensity,
+		},
+	}
+
+	return s, nil
+
+}
+
+// CalculateContinuousPeriodIntensityWithOverlap accepts a slice of models.Period,
+// a time.Duration variable, and timeRemainder variable, and returns a pointer to
+// models.Slot, or an error. It will calculate the average of all elements in the slice,
+// taking into account partial time periods.
+func (c *CalculationService) CalculatePartialContinuousPeriodIntensity(pArr []models.Period, duration time.Duration, timeRemainder int64) (*models.Slot, error) {
+	weight := 0.0
+	totalIntensity := 0.0
+
+	arrLength := len(pArr)
+	if arrLength < 1 {
+		return nil, fmt.Errorf("array length 0")
+	}
+	lastElem := pArr[arrLength-1]
+
+	weight = float64(timeRemainder) / FixedTimePeriod.Minutes()
 	totalIntensity = float64(lastElem.Intensity.Forecast) * weight
 
 	for i := range arrLength {
@@ -177,7 +178,7 @@ func (c *CalculationService) CalculateContinuousPeriodIntensity(pArr []models.Pe
 		totalIntensity += float64(pArr[i].Intensity.Forecast)
 	}
 
-	timeRemainderDuration, err := time.ParseDuration(fmt.Sprint(strconv.Itoa(int(fixedTimePeriod.Minutes())-timeRemainder), "m"))
+	timeRemainderDuration, err := time.ParseDuration(fmt.Sprint(strconv.Itoa(int(FixedTimePeriod.Minutes())-int(timeRemainder)), "m"))
 	if err != nil {
 		return nil, fmt.Errorf("error parsing duration: %v", err)
 	}

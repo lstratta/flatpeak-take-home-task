@@ -14,7 +14,7 @@ type Config struct {
 
 func New() Config {
 	host := getEnvDefault("HOST", "localhost")
-	port := getEnvDefault("PORT", "7777")
+	port := getEnvDefault("PORT", "3000")
 	ao := strings.Split(getEnvDefault("ALLOWED_ORIGINS", fmt.Sprintf("http://%s:%s,https://%s:%s", host, port, host, port)), ",")
 
 	return Config{

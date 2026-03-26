@@ -4,4 +4,4 @@ services:
     container_name: carbon-intensity
     restart: always
     ports:
-    - 7777:7777
+    - 3000:3000

@@ -19,6 +19,6 @@ COPY --from=build /go/bin/main .
 
 ENV HOST="0.0.0.0"
 
-EXPOSE 7777
+EXPOSE 3000
 
 CMD ["./main"]

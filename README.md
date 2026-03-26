@@ -92,6 +92,8 @@ This will build and run the Docker container
 make docker-run
 ```
 
+Once up and running, the application is available on port `7777`.
+
 ### Running tests
 ```bash
 make test

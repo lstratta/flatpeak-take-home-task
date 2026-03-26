@@ -2,7 +2,7 @@
 
 Thank you for taking the time to look over my implementation of this task.
 
-If you want to try out the application, head to [Getting Started](#getting-started).
+If you want to try out the application, head to [Getting Started](#getting-started-1).
 
 ## Contents
 
@@ -10,7 +10,7 @@ If you want to try out the application, head to [Getting Started](#getting-start
 
 1. [About the project](#about-the-project)
 2. [Project structure and extras](#project-structure-and-extras)
-3. [Getting started](#getting-started)
+3. [Getting started](#getting-started-1)
 4. [Concsessions & assumptions](#concessions--assumptions-made)
 
 ### API Documentation

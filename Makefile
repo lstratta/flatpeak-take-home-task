@@ -23,7 +23,6 @@ run:
 # stops and removes all containers 
 cleanup: 
 	@echo "stopping container..."
-	@echo "stopping container..."
 	@docker stop carbon-intensity -i
 	@echo "removing container..."
 	@docker rm pgadmin carbon-intensity -i
